@@ -1,1 +1,4039 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>STARBASE CATCH TYCOON — Starship Mechazilla Simulator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --hud-bg: rgba(7, 12, 24, 0.84);
+      --hud-border: rgba(148, 163, 184, 0.25);
+      --accent-cyan: #38bdf8;
+      --accent-emerald: #22c55e;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+    }
 
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #040814;
+      font-family: 'Kanit', sans-serif;
+      color: #f1f5f9;
+      touch-action: none;
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #gameCanvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      outline: none;
+    }
+
+    .hud-panel {
+      background: var(--hud-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--hud-border);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-game {
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.94), rgba(15, 23, 42, 0.98));
+      border: 1px solid rgba(148, 163, 184, 0.34);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+      transition: transform 0.08s ease, background 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+      cursor: pointer;
+    }
+
+    .btn-game:hover {
+      border-color: rgba(56, 189, 248, 0.75);
+      background: linear-gradient(180deg, rgba(42, 58, 82, 0.96), rgba(20, 31, 52, 0.98));
+    }
+
+    .btn-game:active, .btn-game.key-active {
+      transform: scale(0.94);
+      border-color: #38bdf8 !important;
+      background: linear-gradient(180deg, rgba(14, 116, 144, 0.95), rgba(8, 51, 68, 0.98)) !important;
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.72), inset 0 2px 6px rgba(0, 0, 0, 0.45) !important;
+      color: #ffffff !important;
+    }
+
+    .btn-fire {
+      background: linear-gradient(180deg, rgba(234, 88, 12, 0.93), rgba(154, 52, 18, 0.97));
+      border: 1px solid rgba(251, 146, 60, 0.68);
+      box-shadow: 0 4px 16px rgba(234, 88, 12, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+
+    .btn-fire:hover {
+      border-color: #fdba74;
+      background: linear-gradient(180deg, rgba(249, 115, 22, 0.96), rgba(180, 58, 18, 0.98));
+    }
+
+    .btn-fire:active, .btn-fire.key-active {
+      transform: scale(0.95);
+      background: linear-gradient(180deg, #fb923c, #ea580c) !important;
+      border-color: #fef08a !important;
+      box-shadow: 0 0 24px rgba(251, 146, 60, 0.9), inset 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+    }
+
+    .btn-cut {
+      background: linear-gradient(180deg, rgba(127, 29, 29, 0.85), rgba(69, 10, 10, 0.95));
+      border: 1px solid rgba(248, 113, 113, 0.45);
+      color: #fecaca;
+    }
+
+    .btn-cut:active, .btn-cut.key-active {
+      border-color: #f87171 !important;
+      background: linear-gradient(180deg, #dc2626, #991b1b) !important;
+      box-shadow: 0 0 18px rgba(239, 68, 68, 0.8) !important;
+    }
+
+    .btn-autoland {
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.24), rgba(6, 78, 59, 0.88));
+      border: 1px solid rgba(52, 211, 153, 0.58);
+      color: #d1fae5;
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    }
+
+    .btn-autoland:hover {
+      border-color: #6ee7b7;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.44);
+    }
+
+    .btn-autoland-on {
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.94), rgba(5, 122, 85, 0.98)) !important;
+      border-color: #a7f3d0 !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 24px rgba(52, 211, 153, 0.78), inset 0 1px 0 rgba(255, 255, 255, 0.32) !important;
+      animation: pulseAuto 1.5s infinite ease-in-out;
+    }
+
+    @keyframes pulseAuto {
+      0%, 100% { box-shadow: 0 0 16px rgba(52, 211, 153, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.32); }
+      50% { box-shadow: 0 0 28px rgba(52, 211, 153, 0.94), inset 0 1px 0 rgba(255, 255, 255, 0.45); }
+    }
+
+    .btn-active-cyan {
+      background: linear-gradient(180deg, rgba(14, 116, 144, 0.92), rgba(8, 51, 68, 0.96)) !important;
+      border-color: #38bdf8 !important;
+      color: #e0f2fe !important;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
+    }
+
+    .btn-active-amber {
+      background: linear-gradient(180deg, rgba(180, 83, 9, 0.92), rgba(120, 53, 15, 0.96)) !important;
+      border-color: #fbbf24 !important;
+      color: #fef3c7 !important;
+      box-shadow: 0 0 14px rgba(251, 191, 36, 0.4);
+    }
+
+    .btn-gold {
+      background: linear-gradient(180deg, rgba(217, 119, 6, 0.92), rgba(146, 64, 14, 0.96));
+      border: 1px solid rgba(251, 191, 36, 0.68);
+      color: #fef3c7;
+      box-shadow: 0 4px 14px rgba(217, 119, 6, 0.32);
+    }
+
+    .btn-gold:hover {
+      border-color: #fde68a;
+      box-shadow: 0 0 18px rgba(251, 191, 36, 0.5);
+    }
+
+    .raptor-dot {
+      transition: all 0.1s ease;
+    }
+
+    .raptor-lit {
+      background: radial-gradient(circle, #ffffff 10%, #7dd3fc 45%, #3b82f6 85%);
+      box-shadow: 0 0 12px #38bdf8, 0 0 22px rgba(99, 102, 241, 0.85);
+      border-color: #bae6fd;
+    }
+
+    .raptor-armed {
+      background: radial-gradient(circle, #334155 20%, #1e293b 90%);
+      border-color: #64748b;
+    }
+
+    .raptor-off {
+      background: #0f172a;
+      border-color: #334155;
+      opacity: 0.4;
+    }
+
+    @keyframes toastPop {
+      0% { opacity: 0; transform: translate(-50%, -10px) scale(0.95); }
+      15% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      85% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -8px) scale(0.97); }
+    }
+
+    .toast-anim {
+      animation: toastPop 2.4s ease forwards;
+    }
+
+    @keyframes warnPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .warn-pulse {
+      animation: warnPulse 0.6s infinite ease-in-out;
+    }
+
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 99px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.6);
+      border-radius: 99px;
+    }
+
+    .ctrl-pad-btn {
+      min-width: 54px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    @media (max-width: 640px) {
+      .ctrl-pad-btn {
+        min-width: 44px;
+        height: 46px;
+      }
+    }
+  </style>
+</head>
+<body class="relative w-full h-full overflow-hidden">
+
+  <!-- Main High-Detail 2.5D Layered Simulation Canvas -->
+  <canvas id="gameCanvas" tabindex="0"></canvas>
+
+  <!-- ==================== TOP MISSION CONTROL BAR ==================== -->
+  <div class="fixed top-2 left-2 right-2 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+
+    <!-- Left: Tycoon Balance, Streak & Current Mission Contract -->
+    <div class="hud-panel rounded-2xl px-3 py-1.5 flex items-center gap-2 sm:gap-3 pointer-events-auto">
+      <div class="flex items-center gap-2 pr-2 sm:pr-2.5 border-r border-slate-700/70">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500/30 to-teal-900/60 border border-emerald-400/40 flex items-center justify-center text-base">
+          💰
+        </div>
+        <div>
+          <div class="text-[10px] text-slate-400 leading-none">เงินทุน STARBASE</div>
+          <div id="hudCash" class="mono text-sm sm:text-base font-extrabold text-emerald-300 leading-tight">$500</div>
+        </div>
+      </div>
+
+      <div class="hidden sm:flex flex-col pr-2.5 border-r border-slate-700/70">
+        <div class="text-[10px] text-slate-400 leading-none">STREAK โบนัส</div>
+        <div class="flex items-center gap-1.5 mt-0.5">
+          <span id="hudStreak" class="mono text-xs font-bold text-amber-300">0 รอบ</span>
+          <span id="hudStreakMult" class="mono text-[10px] px-1.5 py-0.5 rounded-md bg-amber-500/20 border border-amber-400/40 text-amber-200">1.0x</span>
+        </div>
+      </div>
+
+      <button id="btnOpenMissions" class="btn-game rounded-xl px-2.5 py-1.5 flex items-center gap-2 text-left">
+        <div>
+          <div class="text-[10px] text-sky-400 leading-none">สัญญาภารกิจคีบ ▾</div>
+          <div id="hudMissionName" class="text-xs font-semibold text-white leading-tight max-w-[130px] sm:max-w-[205px] truncate">1. ทดสอบคีบระยะใกล้</div>
+        </div>
+        <span id="hudMissionReward" class="mono text-[11px] font-bold text-emerald-300 hidden md:inline">$1,500</span>
+      </button>
+    </div>
+
+    <!-- Right: Camera Mode, Hangar Upgrades, Sound, Help, Restart -->
+    <div class="hud-panel rounded-2xl px-2 py-1.5 flex items-center gap-1.5 pointer-events-auto">
+      <button id="btnCamera" title="สลับมุมกล้อง (C)" class="btn-game rounded-xl px-2.5 py-1.5 text-xs flex items-center gap-1 text-sky-200">
+        <span>🎥</span>
+        <span id="camModeText" class="hidden md:inline">ตามจรวด</span>
+        <span class="mono text-[10px] opacity-75 hidden sm:inline">[C]</span>
+      </button>
+      <button id="btnOpenHangar" class="btn-game btn-gold rounded-xl px-2.5 sm:px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5 relative">
+        <span>🔧</span>
+        <span>โรงเก็บ</span>
+        <span id="hangarBadge" class="hidden absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-slate-900 shadow-[0_0_8px_#4ade80]"></span>
+      </button>
+      <button id="btnAudio" title="เปิด/ปิดเสียง" class="btn-game btn-active-cyan rounded-xl px-2.5 py-1.5 text-xs flex items-center gap-1">
+        <span id="audioIcon">🔊</span>
+      </button>
+      <button id="btnHelp" title="คู่มือการควบคุม" class="btn-game rounded-xl px-2.5 py-1.5 text-xs">
+        ⌨️
+      </button>
+      <button id="btnRestart" title="ปล่อยจรวดใหม่ (R)" class="btn-game rounded-xl px-2.5 py-1.5 text-xs text-amber-200 font-medium flex items-center gap-1">
+        <span>↻</span>
+        <span class="hidden sm:inline">[R]</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== CENTER FLIGHT STATUS, CATCH ZONE ALIGNMENT & WARNINGS ==================== -->
+  <div class="fixed top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center gap-1.5 w-max max-w-[94vw]">
+    <!-- Flight Phase Badge -->
+    <div id="phaseBadge" class="hud-panel rounded-full px-3.5 py-1 text-[11px] sm:text-xs font-medium text-sky-100 flex items-center gap-2">
+      <span id="phaseDot" class="w-2.5 h-2.5 rounded-full bg-sky-400 shadow-[0_0_8px_#38bdf8]"></span>
+      <span id="phaseText">BELLY FLOP — เล็งเข้าแขนคีบ Mechazilla หรือกด Z คีบอัตโนมัติ</span>
+    </div>
+
+    <!-- Mechazilla Catch Zone Alignment Bar -->
+    <div id="alignHud" class="hud-panel rounded-2xl px-3 py-1.5 w-[280px] sm:w-[360px]">
+      <div class="flex items-center justify-between text-[10px] mb-1">
+        <span class="text-slate-400 flex items-center gap-1">
+          <span class="inline-block w-2 h-2 rounded-sm bg-red-500/80"></span>หอคอย
+        </span>
+        <span id="alignStatusText" class="mono font-bold text-sky-300">TOWER X: +62.0 ม.</span>
+        <span id="alignHeightText" class="mono text-amber-200">สูงกว่าแขน +400 ม.</span>
+      </div>
+      <div class="relative w-full h-3.5 bg-slate-950/90 rounded-full border border-slate-700/70 overflow-hidden">
+        <!-- Tower Structure Danger Zone (Left) -->
+        <div class="absolute top-0 bottom-0 left-0 w-[16%] bg-red-500/30 border-r border-red-400/70"></div>
+        <!-- Safe Catch Zone Highlight -->
+        <div id="alignSafeZone" class="absolute top-0 bottom-0 bg-emerald-500/25 border-x border-emerald-400/80" style="left: 27%; width: 15%;"></div>
+        <!-- Exact Center Line of Chopsticks (x = 0) -->
+        <div class="absolute top-0 bottom-0 w-0.5 bg-emerald-300 shadow-[0_0_8px_#34d399]" style="left: 35%;"></div>
+        <!-- Live Starship Catch Pin Marker -->
+        <div id="alignShipMarker" class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-white border-2 border-sky-400 shadow-[0_0_10px_#38bdf8]" style="left: 72%;"></div>
+      </div>
+      <div class="flex items-center justify-between text-[9px] text-slate-400 mt-0.5">
+        <span id="alignArmReady">🦾 แขนคีบ: กางรอรับ (OPEN)</span>
+        <span id="alignCatchCond" class="mono">เกณฑ์คีบ: V-SPD ≤ 9.5 | TILT ≤ 14°</span>
+      </div>
+    </div>
+
+    <!-- Critical Warning Pill -->
+    <div id="warningPill" class="hidden rounded-full px-4 py-1 text-xs font-semibold bg-red-950/90 border border-red-500/80 text-red-200 shadow-[0_0_20px_rgba(239,68,68,0.55)] warn-pulse">
+      ⚠️ คำเตือน
+    </div>
+  </div>
+
+  <!-- Floating Status Toast -->
+  <div id="statusToast" class="hidden fixed top-40 left-1/2 -translate-x-1/2 z-30 pointer-events-none hud-panel rounded-full px-4 py-1.5 text-xs font-semibold text-amber-200 border-amber-400/50 shadow-lg">
+    สลับเป็นควบคุมเอง (Manual Override)
+  </div>
+
+  <!-- Offscreen Mechazilla Pointer -->
+  <div id="towerPointer" class="hidden fixed bottom-44 sm:bottom-40 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+    <div class="hud-panel rounded-full px-3.5 py-1 text-xs flex items-center gap-2 border-amber-400/50 text-amber-200">
+      <span id="towerArrow" class="text-base font-bold">↙</span>
+      <span>แขนคีบ Mechazilla:</span>
+      <span id="towerDistText" class="mono font-bold text-white">0 ม.</span>
+    </div>
+  </div>
+
+  <!-- ==================== HELP POPOVER ==================== -->
+  <div id="helpModal" class="hidden fixed top-16 right-3 z-30 hud-panel rounded-2xl p-4 w-80 max-w-[92vw] text-xs leading-relaxed">
+    <div class="flex items-center justify-between mb-2 pb-2 border-b border-slate-700/70">
+      <span class="font-semibold text-sm text-sky-300">คู่มือการควบคุม (รองรับแป้นไทย 100%)</span>
+      <button id="btnCloseHelp" class="btn-game rounded-lg px-2 py-0.5 text-slate-300">✕</button>
+    </div>
+    <div class="space-y-1.5 text-slate-200">
+      <div class="flex justify-between"><span class="text-slate-400">จุดเครื่องยนต์ Raptor (กดค้าง):</span><span class="mono text-orange-300">W / ↑ / Space</span></div>
+      <div class="flex justify-between"><span class="text-slate-400">ดับเครื่อง / ลดแรงขับทันที:</span><span class="mono text-red-300">S / ↓</span></div>
+      <div class="flex justify-between"><span class="text-slate-400">เอียงตัว / ขยับครีบ / Gimbal:</span><span class="mono text-sky-300">A / D หรือ ← / →</span></div>
+      <div class="flex justify-between"><span class="text-slate-400">ปรับคันเร่งค้างละเอียด:</span><span class="mono text-slate-300">Shift / Ctrl</span></div>
+      <div class="flex justify-between"><span class="text-slate-400">เปิด/ปิด AI คีบอัตโนมัติ:</span><span class="mono text-emerald-300 font-bold">Z</span></div>
+      <div class="flex justify-between"><span class="text-slate-400">สลับมุมกล้อง (จรวด / แขนคีบ):</span><span class="mono text-sky-300">C</span></div>
+      <div class="flex justify-between"><span class="text-slate-400">เลือกเครื่อง Raptor (1/2/3/Auto):</span><span class="mono text-cyan-300">1 / 2 / 3 / 0</span></div>
+      <div class="flex justify-between"><span class="text-slate-400">ปล่อยจรวดรอบใหม่:</span><span class="mono text-slate-300">R</span></div>
+    </div>
+    <div class="mt-3 pt-2 border-t border-slate-700/70 text-[11px] text-slate-300 space-y-1">
+      <p class="text-amber-300 font-medium">🦾 ระบบคีบ Mechazilla (ไม่มีขาตั้ง!):</p>
+      <p>Starship รุ่นนี้ <b>ถอดขาลงจอดออกทั้งหมด</b> ต้องพลิกตัวตั้งตรงแล้วค่อยๆ หย่อน <b>หมุดรับน้ำหนัก (Catch Pins)</b> ใต้ครีบหน้าลงระหว่างแขนคีบ แขนจะปิดล็อกและโช้คไฮดรอลิกจะยุบซับแรงให้เอง</p>
+      <p class="text-emerald-300 font-medium pt-1">🤖 โหมด AI คีบอัตโนมัติ (Z):</p>
+      <p>กด <b>Z</b> ได้ทุกเมื่อ คอมพิวเตอร์การบินจะร่อน Belly Flop พลิกตัว และนำจรวดเข้าแขนคีบให้เอง หากกด W/A/S/D/Space จะตัดกลับเป็นควบคุมเองทันที!</p>
+    </div>
+  </div>
+
+  <!-- ==================== BOTTOM INTERACTIVE CONTROLS & SPACEX TELEMETRY HUD ==================== -->
+  <div class="fixed bottom-2 left-2 right-2 z-20 flex flex-col gap-2 pointer-events-none">
+
+    <!-- Row 1: Tactile On-Screen Controls (Light up live with Keyboard!) -->
+    <div class="flex items-end justify-between w-full px-0.5 gap-2 pointer-events-none">
+
+      <!-- Left Cluster: Tilt A / D + Cut S -->
+      <div class="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
+        <button id="ctrlLeft" class="btn-game ctrl-pad-btn px-3 text-sky-200" aria-label="เอียงซ้าย">
+          <span class="text-lg leading-none">↺</span>
+          <span class="text-[10px] mono opacity-85 mt-0.5">A / ←</span>
+        </button>
+        <button id="ctrlRight" class="btn-game ctrl-pad-btn px-3 text-sky-200" aria-label="เอียงขวา">
+          <span class="text-lg leading-none">↻</span>
+          <span class="text-[10px] mono opacity-85 mt-0.5">D / →</span>
+        </button>
+        <button id="ctrlCut" class="btn-game btn-cut ctrl-pad-btn px-2.5" aria-label="ดับเครื่องยนต์">
+          <span class="text-sm leading-none">⏹</span>
+          <span class="text-[10px] mono opacity-90 mt-0.5">S / ↓</span>
+        </button>
+      </div>
+
+      <!-- Right Cluster: Auto-Catch (Z) + Big Fire Raptor (W/Space) -->
+      <div class="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
+        <button id="ctrlAutoLand" class="btn-game btn-autoland ctrl-pad-btn px-3 sm:px-4" aria-label="คีบอัตโนมัติ">
+          <span class="text-xs sm:text-sm font-bold leading-tight flex items-center gap-1">
+            <span>🤖</span>
+            <span id="autoLandBtnLabel">AI คีบอัตโนมัติ</span>
+          </span>
+          <span id="autoLandSub" class="text-[10px] mono opacity-90">กด [Z] • AI Lv.1</span>
+        </button>
+        <button id="ctrlFire" class="btn-game btn-fire ctrl-pad-btn px-4 sm:px-6 text-white" aria-label="จุดเครื่องยนต์ Raptor">
+          <span class="text-xs sm:text-sm font-extrabold leading-tight flex items-center gap-1">
+            <span>🔥</span>
+            <span>จุด RAPTOR</span>
+          </span>
+          <span class="text-[10px] mono opacity-90">W / ↑ / Space</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Row 2: SpaceX Aerospace Telemetry Strip -->
+    <div class="grid grid-cols-12 gap-1.5 sm:gap-2 items-stretch pointer-events-auto">
+
+      <!-- Left: Primary Flight Numbers (ALT, V-SPD, H-SPD, TOWER X, TILT) -->
+      <div class="col-span-12 lg:col-span-6 hud-panel rounded-2xl p-2 sm:p-2.5 flex items-center">
+        <div class="grid grid-cols-5 gap-1.5 w-full">
+          <div class="bg-slate-900/70 rounded-xl px-2 py-1 border border-slate-700/45">
+            <div class="text-[9px] sm:text-[10px] text-slate-400">ALT ความสูง</div>
+            <div class="mono text-xs sm:text-sm font-bold text-white"><span id="hudAlt">480</span><span class="text-[9px] text-slate-400 ml-0.5">ม.</span></div>
+          </div>
+          <div class="bg-slate-900/70 rounded-xl px-2 py-1 border border-slate-700/45">
+            <div class="text-[9px] sm:text-[10px] text-slate-400">V-SPD แนวดิ่ง</div>
+            <div id="hudVyWrap" class="mono text-xs sm:text-sm font-bold text-sky-300"><span id="hudVy">0.0</span><span class="text-[9px] text-slate-400 ml-0.5">ม/วิ</span></div>
+          </div>
+          <div class="bg-slate-900/70 rounded-xl px-2 py-1 border border-slate-700/45">
+            <div class="text-[9px] sm:text-[10px] text-slate-400">H-SPD แนวนอน</div>
+            <div class="mono text-xs sm:text-sm font-bold text-slate-100"><span id="hudVx">0.0</span><span class="text-[9px] text-slate-400 ml-0.5">ม/วิ</span></div>
+          </div>
+          <div class="bg-slate-900/70 rounded-xl px-2 py-1 border border-slate-700/45">
+            <div class="text-[9px] sm:text-[10px] text-slate-400">TOWER X</div>
+            <div id="hudTowerXWrap" class="mono text-xs sm:text-sm font-bold text-sky-300"><span id="hudTowerX">+62</span><span class="text-[9px] text-slate-400 ml-0.5">ม.</span></div>
+          </div>
+          <div class="bg-slate-900/70 rounded-xl px-2 py-1 border border-slate-700/45">
+            <div class="text-[9px] sm:text-[10px] text-slate-400">TILT มุมเอียง</div>
+            <div id="hudPitchWrap" class="mono text-xs sm:text-sm font-bold text-amber-300"><span id="hudPitch">-76</span><span class="text-[9px] text-slate-400">°</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center: Raptor Cluster (1/2/3/Auto) + Throttle Gauge -->
+      <div class="col-span-6 lg:col-span-3 hud-panel rounded-2xl p-2 sm:p-2.5 flex items-center justify-between gap-2">
+        <div class="flex flex-col items-center gap-1 shrink-0">
+          <div class="relative w-11 h-10 flex items-center justify-center">
+            <div id="rap0" class="raptor-dot raptor-armed w-3.5 h-3.5 rounded-full border-2 absolute top-0 left-1/2 -translate-x-1/2"></div>
+            <div id="rap1" class="raptor-dot raptor-armed w-3.5 h-3.5 rounded-full border-2 absolute bottom-0.5 left-0.5"></div>
+            <div id="rap2" class="raptor-dot raptor-armed w-3.5 h-3.5 rounded-full border-2 absolute bottom-0.5 right-0.5"></div>
+          </div>
+          <div class="flex items-center gap-0.5">
+            <button id="btnEng1" class="btn-game rounded px-1 py-0.5 text-[9px] mono">1</button>
+            <button id="btnEng2" class="btn-game rounded px-1 py-0.5 text-[9px] mono">2</button>
+            <button id="btnEng3" class="btn-game rounded px-1 py-0.5 text-[9px] mono">3</button>
+            <button id="btnEngAuto" class="btn-game btn-active-cyan rounded px-1 py-0.5 text-[9px] mono">A</button>
+          </div>
+        </div>
+
+        <div class="flex-1 flex flex-col justify-between min-w-[60px]">
+          <div class="flex items-center justify-between text-[10px]">
+            <span class="text-slate-400">RAPTOR</span>
+            <span id="hudThrPct" class="mono font-bold text-orange-300">0%</span>
+          </div>
+          <div class="relative w-full h-3 bg-slate-900/90 rounded-full overflow-hidden border border-slate-700/70 my-1">
+            <div id="barThrTarget" class="absolute top-0 left-0 h-full bg-orange-400/25" style="width: 0%"></div>
+            <div id="barThrActual" class="absolute top-0 left-0 h-full bg-gradient-to-r from-sky-500 via-cyan-300 to-orange-400 rounded-full" style="width: 0%"></div>
+          </div>
+          <div class="flex items-center justify-between text-[10px] text-slate-400">
+            <span>TWR <b id="hudTwr" class="mono text-slate-200">0.0</b></span>
+            <span id="hudModeLabel" class="mono text-sky-300">MANUAL</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Propellant CH4/LOX + Live Wind -->
+      <div class="col-span-6 lg:col-span-3 hud-panel rounded-2xl p-2 sm:p-2.5 flex items-center justify-between gap-2.5">
+        <div class="flex-1 space-y-1">
+          <div class="flex items-center justify-between text-[10px]">
+            <span class="text-cyan-300 font-semibold">PROP CH4/LOX</span>
+            <span id="hudFuelPct" class="mono font-bold text-white">100%</span>
+          </div>
+          <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-700/60">
+            <div id="barCh4" class="h-full bg-gradient-to-r from-cyan-500 to-sky-300 rounded-full" style="width: 100%"></div>
+          </div>
+          <div class="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-700/60">
+            <div id="barLox" class="h-full bg-gradient-to-r from-indigo-500 to-blue-300 rounded-full" style="width: 100%"></div>
+          </div>
+        </div>
+
+        <div class="shrink-0 bg-slate-900/70 rounded-xl px-2.5 py-1.5 border border-slate-700/50 text-right min-w-[82px]">
+          <div class="text-[9px] text-slate-400">แรงลมปะทะ</div>
+          <div id="hudWind" class="mono text-xs font-bold text-amber-200">1.2 ←</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== POST-CATCH PAYOUT RECEIPT MODAL ==================== -->
+  <div id="resultModal" class="hidden fixed inset-0 z-40 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3">
+    <div class="hud-panel rounded-3xl p-5 sm:p-6 max-w-md w-full border border-slate-600/50 shadow-2xl">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <div id="resSubtitle" class="text-[11px] tracking-widest uppercase text-emerald-400 font-semibold">MECHAZILLA CATCH CONFIRMED</div>
+          <h2 id="resTitle" class="text-xl sm:text-2xl font-bold text-white mt-0.5">คีบจรวดสำเร็จ!</h2>
+        </div>
+        <div id="resGradeBadge" class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-extrabold mono shadow-lg border-2">
+          S
+        </div>
+      </div>
+
+      <!-- Telemetry Mini Row -->
+      <div class="grid grid-cols-3 gap-2 mb-3 text-center">
+        <div class="bg-slate-900/75 rounded-xl py-1.5 px-2 border border-slate-700/50">
+          <div class="text-[10px] text-slate-400">ความเร็วตอนคีบ</div>
+          <div id="resVy" class="mono text-sm font-bold text-emerald-300">1.8 ม/วิ</div>
+        </div>
+        <div class="bg-slate-900/75 rounded-xl py-1.5 px-2 border border-slate-700/50">
+          <div class="text-[10px] text-slate-400">ห่างกลางแขนคีบ</div>
+          <div id="resOffset" class="mono text-sm font-bold text-sky-300">1.1 ม.</div>
+        </div>
+        <div class="bg-slate-900/75 rounded-xl py-1.5 px-2 border border-slate-700/50">
+          <div class="text-[10px] text-slate-400">มุมเอียง</div>
+          <div id="resAngle" class="mono text-sm font-bold text-amber-300">1.4°</div>
+        </div>
+      </div>
+
+      <!-- Itemized Cash Payout Receipt -->
+      <div class="bg-slate-950/85 rounded-2xl p-3.5 border border-slate-700/60 mb-4 space-y-1.5 text-xs">
+        <div id="receiptLines" class="space-y-1.5"></div>
+        <div class="pt-2 mt-2 border-t border-slate-700/80 flex items-center justify-between">
+          <div>
+            <div class="text-[11px] text-slate-400">รายได้สุทธิรอบนี้</div>
+            <div id="resNewBalance" class="text-[11px] text-slate-400 mono">ยอดคงเหลือใหม่: $0</div>
+          </div>
+          <div id="resTotalEarned" class="mono text-2xl font-extrabold text-emerald-300">+$0</div>
+        </div>
+      </div>
+
+      <p id="resComment" class="text-xs text-slate-300 mb-4 text-center"></p>
+
+      <div class="grid grid-cols-2 gap-2">
+        <button id="btnNextDrop" class="col-span-2 btn-game btn-active-cyan rounded-xl py-3 font-bold text-sm">
+          🚀 ปล่อยจรวดรอบถัดไป [R]
+        </button>
+        <button id="btnResHangar" class="btn-game btn-gold rounded-xl py-2.5 font-semibold text-xs">
+          🔧 โรงเก็บอัปเกรด
+        </button>
+        <button id="btnResMissions" class="btn-game rounded-xl py-2.5 font-semibold text-xs text-slate-200">
+          📋 เลือกภารกิจ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== HANGAR UPGRADE WORKSHOP MODAL ==================== -->
+  <div id="hangarModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3">
+    <div class="hud-panel rounded-3xl p-5 max-w-2xl w-full max-h-[88vh] flex flex-col border border-slate-600/50 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-700/70">
+        <div>
+          <h2 class="text-lg sm:text-xl font-bold text-amber-200 flex items-center gap-2">
+            <span>🔧</span> โรงเก็บอัปเกรด Starship &amp; แขนคีบ Mechazilla
+          </h2>
+          <p class="text-xs text-slate-400">อัปเกรดเครื่องยนต์ Raptor 3, ถังเชื้อเพลิง, ครีบแอโร, แขนคีบไฮดรอลิก และ AI เข้าคีบอัตโนมัติ</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="text-right">
+            <div class="text-[10px] text-slate-400">เงินทุนคงเหลือ</div>
+            <div id="hangarCash" class="mono text-base font-extrabold text-emerald-300">$500</div>
+          </div>
+          <button id="btnCloseHangar" class="btn-game rounded-xl px-3 py-1.5 text-sm">✕</button>
+        </div>
+      </div>
+
+      <div id="upgradeGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 py-4 overflow-y-auto custom-scroll pr-1">
+        <!-- Populated dynamically -->
+      </div>
+
+      <div class="pt-3 border-t border-slate-700/70 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="text-slate-400">
+          คีบสำเร็จรวม: <b id="statLandings" class="mono text-white">0</b> ครั้ง • Streak สูงสุด: <b id="statBestStreak" class="mono text-amber-300">0</b>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btnResetSave" class="btn-game rounded-xl px-3 py-1.5 text-[11px] text-red-300 border-red-500/40">
+            ล้างเซฟเริ่มต้นใหม่
+          </button>
+          <button id="btnHangarFly" class="btn-game btn-active-cyan rounded-xl px-4 py-2 font-semibold text-xs">
+            🚀 กลับไปคีบจรวด
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MISSIONS / CONTRACTS MODAL ==================== -->
+  <div id="missionsModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3">
+    <div class="hud-panel rounded-3xl p-5 max-w-2xl w-full max-h-[88vh] flex flex-col border border-slate-600/50 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-700/70">
+        <div>
+          <h2 class="text-lg sm:text-xl font-bold text-sky-200 flex items-center gap-2">
+            <span>📋</span> เลือกสัญญาภารกิจคีบ Mechazilla (6 ด่าน)
+          </h2>
+          <p class="text-xs text-slate-400">ลมแรงขึ้น มุมร่อนท้าทายขึ้น ค่าจ้างและโบนัสสูงขึ้น ปลดล็อกได้จากการคีบสำเร็จหรือใช้เงินเปิดสัญญา</p>
+        </div>
+        <button id="btnCloseMissions" class="btn-game rounded-xl px-3 py-1.5 text-sm">✕</button>
+      </div>
+
+      <div id="missionsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 py-4 overflow-y-auto custom-scroll pr-1">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== COMPLETE SIMULATION, MECHAZILLA 2.5D & TYCOON ENGINE ==================== -->
+  <script>
+  (() => {
+    'use strict';
+
+    /* =========================================================================
+       1. CONSTANTS, TOWER GEOMETRY, 6 MISSIONS & 6 UPGRADE TRACKS
+       ========================================================================= */
+    const G = 9.81;
+    const ROCKET_RADIUS = 4.5;
+    const CATCH_PIN_LOCAL_Y = 12.6;  // Load points right below forward flaps!
+    const NOZZLE_LOCAL_Y = -25.8;    // Bottom of Raptor engine bells (no legs!)
+    const TOWER_LEFT_X = -34.0;
+    const TOWER_RIGHT_X = -19.0;     // 15m wide Stage 0 Steel Lattice Catch Tower
+    const TOWER_HEIGHT = 118.0;
+    const CATCH_Y = 53.0;            // Chopsticks catch elevation (~53m above pad; Starship nozzles hang ~14.5m above trench!)
+    const QD_ARM_Y = 74.0;           // Quick Disconnect (QD) arm elevation
+    const APRON_HALF_W = 72.0;
+    const SAVE_KEY = 'starbase_catch_tycoon_v2';
+
+    const MISSIONS = [
+      {
+        id: 0,
+        name: '1. ทดสอบคีบระยะใกล้',
+        desc: 'ฟ้าเปิด ลมทะเลอ่อนๆ ร่อนเข้ามาจากฝั่งตะวันออกเพื่อฝึกเล็งหมุด Catch Pins เข้าแขนคีบ Mechazilla',
+        theme: 'daylight',
+        baseReward: 1500,
+        unlockLandings: 0,
+        unlockCost: 0,
+        startX: 64,
+        startY: 465,
+        startVx: -7.5,
+        startVy: -18,
+        startAngle: -76 * Math.PI / 180,
+        fuelMass: 36000,
+        extraMass: 0,
+        windBase: -1.1,
+        windGust: 0.8,
+        rain: false
+      },
+      {
+        id: 1,
+        name: '2. คีบฝ่าลมชายฝั่งยามเย็น',
+        desc: 'แสงสีทอง Boca Chica ลมกรรโชกพัดขวางหอคอย ทดสอบการแก้เอียงและเลื่อนตัวเข้าแขนคีบอย่างแม่นยำ',
+        theme: 'golden',
+        baseReward: 2900,
+        unlockLandings: 1,
+        unlockCost: 1100,
+        startX: 114,
+        startY: 560,
+        startVx: -11,
+        startVy: -22,
+        startAngle: -82 * Math.PI / 180,
+        fuelMass: 38000,
+        extraMass: 4500,
+        windBase: 4.8,
+        windGust: 3.2,
+        rain: false
+      },
+      {
+        id: 2,
+        name: '3. Belly Flop ความสูง 760 ม.',
+        desc: 'ร่อนแนวนอนจากระดับสูงจนกระเบื้อง TPS ลุกเรืองแสงสีส้มแดง ก่อนพลิกตัว 90° เข้าแขนคีบกลางอากาศ',
+        theme: 'highalt',
+        baseReward: 4800,
+        unlockLandings: 2,
+        unlockCost: 2700,
+        startX: 148,
+        startY: 760,
+        startVx: -14,
+        startVy: -28,
+        startAngle: -86 * Math.PI / 180,
+        fuelMass: 40000,
+        extraMass: 8500,
+        windBase: -3.6,
+        windGust: 2.7,
+        rain: false
+      },
+      {
+        id: 3,
+        name: '4. คีบกลางพายุฝนยามค่ำคืน',
+        desc: 'พายุฝนฟ้าคะนองกลางดึกใต้แสงสปอตไลท์หอคอย ลมแปรปรวนรุนแรง ท้าทายระบบทรงตัวขั้นสุด!',
+        theme: 'nightstorm',
+        baseReward: 7600,
+        unlockLandings: 4,
+        unlockCost: 5400,
+        startX: 132,
+        startY: 625,
+        startVx: -12,
+        startVy: -25,
+        startAngle: -84 * Math.PI / 180,
+        fuelMass: 39000,
+        extraMass: 10000,
+        windBase: 7.0,
+        windGust: 4.8,
+        rain: true
+      },
+      {
+        id: 4,
+        name: '5. ขนส่งสัมภาระหนักยามดึก',
+        desc: 'Starship บรรทุกดาวเทียมหนัก +22 ตัน แรงเฉื่อยสูงมาก ต้องเผื่อจังหวะ Flip & Burn ให้พอดีกับแขนคีบ',
+        theme: 'night',
+        baseReward: 11500,
+        unlockLandings: 6,
+        unlockCost: 9200,
+        startX: 146,
+        startY: 690,
+        startVx: -15,
+        startVy: -27,
+        startAngle: -85 * Math.PI / 180,
+        fuelMass: 44000,
+        extraMass: 22000,
+        windBase: -5.4,
+        windGust: 3.9,
+        rain: false
+      },
+      {
+        id: 5,
+        name: '6. รีเอนทรีวงโคจรระดับตำนาน',
+        desc: 'กลับจากวงโคจรความร้อนสูงพร้อมสัมภาระหนักและลมแรง ค่าจ้างสูงสุดแห่ง Starbase Stage 0!',
+        theme: 'orbital',
+        baseReward: 18000,
+        unlockLandings: 8,
+        unlockCost: 15000,
+        startX: 176,
+        startY: 860,
+        startVx: -18,
+        startVy: -34,
+        startAngle: -88 * Math.PI / 180,
+        fuelMass: 48000,
+        extraMass: 28000,
+        windBase: 6.2,
+        windGust: 4.6,
+        rain: false
+      }
+    ];
+
+    const UPGRADE_DEFS = [
+      {
+        key: 'raptor',
+        icon: '🔥',
+        name: 'เครื่องยนต์ Raptor 3',
+        desc: 'เพิ่มแรงขับสูงสุด เร่งตอบสนองไวขึ้น ประสิทธิภาพเชื้อเพลิง (Isp) และมุม Gimbal ดีขึ้น',
+        costs: [0, 950, 2300, 5200, 11500],
+        statText: (lv) => `แรงขับ +${(lv - 1) * 12}% • Isp +${(lv - 1) * 6}% • Gimbal ${(16 + (lv - 1) * 1.5).toFixed(1)}°`
+      },
+      {
+        key: 'tank',
+        icon: '⛽',
+        name: 'ถัง Header Tank CH4/LOX',
+        desc: 'เพิ่มความจุเชื้อเพลิงลงจอดสำหรับประคองลอยตัวจัดแนวเข้าแขนคีบได้นานขึ้น',
+        costs: [0, 850, 2000, 4500, 9800],
+        statText: (lv) => `ความจุเชื้อเพลิง +${(lv - 1) * 18}%`
+      },
+      {
+        key: 'aero',
+        icon: '🪽',
+        name: 'ครีบแอโร & ระบบ RCS',
+        desc: 'เพิ่มแรงบิดครีบหน้า-หลังและหัวขับแก๊สเย็น RCS พลิกตัวไวขึ้น คุมมุมนิ่งสู้ลมแรงได้ดีกว่าเดิม',
+        costs: [0, 800, 1900, 4200, 9000],
+        statText: (lv) => `แรงคุมทิศทาง & RCS +${(lv - 1) * 22}%`
+      },
+      {
+        key: 'arms',
+        icon: '🦾',
+        name: 'แขนคีบ Mechazilla & โช้คไฮดรอลิก',
+        desc: 'ขยายระยะ Catch Zone กว้างขึ้น รับความเร็วและมุมเอียงตอนคีบได้สูงขึ้น ลดค่าซ่อมเมื่อคีบแรง',
+        costs: [0, 1000, 2400, 5400, 11800],
+        statText: (lv) => `โซน ±${(7.6 + (lv - 1) * 0.95).toFixed(1)}ม. • ทนตก ${(9.5 + (lv - 1) * 1.5).toFixed(1)} ม/วิ`
+      },
+      {
+        key: 'ai',
+        icon: '🤖',
+        name: 'คอมพิวเตอร์ AI เข้าคีบอัตโนมัติ',
+        desc: 'เพิ่มความแม่นยำและความนุ่มนวลของโหมด Z แก้ทางลมเก่งขึ้น คีบกลางเป้าเกรด S บ่อยขึ้น',
+        costs: [0, 1150, 2700, 6000, 13000],
+        statText: (lv) => `AI Autopilot Lv.${lv} ${lv === 5 ? '(BULLSEYE PRO)' : ''}`
+      },
+      {
+        key: 'cargo',
+        icon: '💼',
+        name: 'สัญญาขนส่งอวกาศ',
+        desc: 'เพิ่มโบนัสเงินรางวัลภารกิจและเงินประกันข้อมูล Telemetry +25% ต่อเลเวล',
+        costs: [0, 1350, 3300, 7400, 16500],
+        statText: (lv) => `ตัวคูณเงินรางวัล & ประกัน ×${(1 + (lv - 1) * 0.25).toFixed(2)}`
+      }
+    ];
+
+    /* =========================================================================
+       2. PERSISTENT SAVE PROFILE (localStorage)
+       ========================================================================= */
+    function getDefaultProfile() {
+      return {
+        cash: 500,
+        totalLandings: 0,
+        totalFlights: 0,
+        streak: 0,
+        bestStreak: 0,
+        unlockedMissions: [0],
+        selectedMission: 0,
+        upgrades: {
+          raptor: 1,
+          tank: 1,
+          aero: 1,
+          arms: 1,
+          ai: 1,
+          cargo: 1
+        }
+      };
+    }
+
+    let profile = loadProfile();
+    let resetArmed = false;
+
+    function loadProfile() {
+      try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (!raw) return getDefaultProfile();
+        const parsed = JSON.parse(raw);
+        const def = getDefaultProfile();
+        return {
+          ...def,
+          ...parsed,
+          upgrades: { ...def.upgrades, ...(parsed.upgrades || {}) },
+          unlockedMissions: Array.isArray(parsed.unlockedMissions) ? parsed.unlockedMissions : [0]
+        };
+      } catch (e) {
+        return getDefaultProfile();
+      }
+    }
+
+    function saveProfile() {
+      try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(profile));
+      } catch (e) {}
+    }
+
+    function checkAutoMissionUnlocks() {
+      let changed = false;
+      MISSIONS.forEach((m) => {
+        if (!profile.unlockedMissions.includes(m.id) && profile.totalLandings >= m.unlockLandings) {
+          profile.unlockedMissions.push(m.id);
+          changed = true;
+        }
+      });
+      if (changed) saveProfile();
+    }
+
+    function getStreakMultiplier(streakCount = profile.streak) {
+      if (streakCount <= 0) return 1.0;
+      if (streakCount === 1) return 1.25;
+      if (streakCount === 2) return 1.5;
+      if (streakCount === 3) return 1.75;
+      if (streakCount === 4) return 2.0;
+      return 2.5;
+    }
+
+    function getShipSpecs() {
+      const u = profile.upgrades;
+      return {
+        raptorThrust: 2400000 * (1 + (u.raptor - 1) * 0.12),
+        isp: 345 * (1 + (u.raptor - 1) * 0.06),
+        spoolTauUp: Math.max(0.055, 0.135 - (u.raptor - 1) * 0.018),
+        spoolTauDown: Math.max(0.05, 0.105 - (u.raptor - 1) * 0.012),
+        maxGimbalRad: (16 + (u.raptor - 1) * 1.5) * Math.PI / 180,
+        fuelCapMult: 1 + (u.tank - 1) * 0.18,
+        aeroMult: 1 + (u.aero - 1) * 0.22,
+        catchHalfWidth: 7.6 + (u.arms - 1) * 0.95, // Lv.1 = 7.6m, Lv.5 = 11.4m (still clears tower at -19m!)
+        maxSafeVy: 9.5 + (u.arms - 1) * 1.5,
+        maxSafeVx: 5.0 + (u.arms - 1) * 0.8,
+        maxSafeTiltDeg: 14.0 + (u.arms - 1) * 1.8,
+        armSpringK: 20 + (u.arms - 1) * 2.5,
+        armDampC: 5.6 + (u.arms - 1) * 0.7,
+        repairDiscount: (u.arms - 1) * 0.18,
+        aiLevel: u.ai,
+        cargoMult: 1 + (u.cargo - 1) * 0.25
+      };
+    }
+
+    /* =========================================================================
+       3. PROCEDURAL WEB AUDIO ENGINE (RAPTOR, WIND, RCS, HYDRAULIC LOCK, RUD)
+       ========================================================================= */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+        this.initialized = false;
+        this.lastProxBeep = 0;
+      }
+
+      init() {
+        if (this.initialized) {
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume().catch(() => {});
+          }
+          return;
+        }
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return;
+          this.ctx = new AudioCtx();
+
+          const sr = this.ctx.sampleRate;
+          const len = sr * 2;
+          const whiteBuf = this.ctx.createBuffer(1, len, sr);
+          const wData = whiteBuf.getChannelData(0);
+          const brownBuf = this.ctx.createBuffer(1, len, sr);
+          const bData = brownBuf.getChannelData(0);
+          let lastOut = 0;
+          for (let i = 0; i < len; i++) {
+            const w = Math.random() * 2 - 1;
+            wData[i] = w;
+            lastOut = (lastOut + 0.04 * w) / 1.04;
+            bData[i] = lastOut * 3.5;
+          }
+
+          this.masterGain = this.ctx.createGain();
+          this.masterGain.gain.value = this.enabled ? 0.55 : 0;
+          this.masterGain.connect(this.ctx.destination);
+
+          // Raptor Deep Low-End Rumble
+          const rumbleSrc = this.ctx.createBufferSource();
+          rumbleSrc.buffer = brownBuf;
+          rumbleSrc.loop = true;
+          this.rumbleFilter = this.ctx.createBiquadFilter();
+          this.rumbleFilter.type = 'lowpass';
+          this.rumbleFilter.frequency.value = 115;
+          this.rumbleGain = this.ctx.createGain();
+          this.rumbleGain.gain.value = 0;
+          rumbleSrc.connect(this.rumbleFilter);
+          this.rumbleFilter.connect(this.rumbleGain);
+          this.rumbleGain.connect(this.masterGain);
+          rumbleSrc.start();
+
+          // Raptor Supersonic Crackle
+          const crackleSrc = this.ctx.createBufferSource();
+          crackleSrc.buffer = whiteBuf;
+          crackleSrc.loop = true;
+          this.crackleFilter = this.ctx.createBiquadFilter();
+          this.crackleFilter.type = 'bandpass';
+          this.crackleFilter.frequency.value = 720;
+          this.crackleFilter.Q.value = 0.65;
+          this.crackleGain = this.ctx.createGain();
+          this.crackleGain.gain.value = 0;
+          crackleSrc.connect(this.crackleFilter);
+          this.crackleFilter.connect(this.crackleGain);
+          this.crackleGain.connect(this.masterGain);
+          crackleSrc.start();
+
+          // High-Speed Belly Flop Wind Rush
+          const windSrc = this.ctx.createBufferSource();
+          windSrc.buffer = whiteBuf;
+          windSrc.loop = true;
+          this.windFilter = this.ctx.createBiquadFilter();
+          this.windFilter.type = 'bandpass';
+          this.windFilter.frequency.value = 300;
+          this.windFilter.Q.value = 1.6;
+          this.windGain = this.ctx.createGain();
+          this.windGain.gain.value = 0;
+          windSrc.connect(this.windFilter);
+          this.windFilter.connect(this.windGain);
+          this.windGain.connect(this.masterGain);
+          windSrc.start();
+
+          // Cold-Gas RCS Hiss
+          const rcsSrc = this.ctx.createBufferSource();
+          rcsSrc.buffer = whiteBuf;
+          rcsSrc.loop = true;
+          this.rcsFilter = this.ctx.createBiquadFilter();
+          this.rcsFilter.type = 'highpass';
+          this.rcsFilter.frequency.value = 2800;
+          this.rcsGain = this.ctx.createGain();
+          this.rcsGain.gain.value = 0;
+          rcsSrc.connect(this.rcsFilter);
+          this.rcsFilter.connect(this.rcsGain);
+          this.rcsGain.connect(this.masterGain);
+          rcsSrc.start();
+
+          this.brownBuf = brownBuf;
+          this.whiteBuf = whiteBuf;
+          this.initialized = true;
+        } catch (err) {
+          console.warn('Web Audio unavailable:', err);
+        }
+      }
+
+      setEnabled(flag) {
+        this.enabled = flag;
+        if (this.masterGain && this.ctx) {
+          this.masterGain.gain.setTargetAtTime(flag ? 0.55 : 0, this.ctx.currentTime, 0.04);
+        }
+      }
+
+      updateContinuous(thrustNorm, groundEffect, airSpeed, aoaFactor, rcsActive, alive) {
+        if (!this.initialized || !this.ctx) return;
+        const t = this.ctx.currentTime;
+        if (!alive) {
+          this.rumbleGain.gain.setTargetAtTime(0, t, 0.08);
+          this.crackleGain.gain.setTargetAtTime(0, t, 0.08);
+          this.windGain.gain.setTargetAtTime(0, t, 0.14);
+          this.rcsGain.gain.setTargetAtTime(0, t, 0.04);
+          return;
+        }
+        const flutter = 0.88 + Math.random() * 0.24;
+        const rVol = Math.min(1.0, thrustNorm * (0.68 + groundEffect * 0.45)) * flutter;
+        const cVol = Math.min(0.65, thrustNorm * (0.28 + groundEffect * 0.36)) * flutter;
+        this.rumbleGain.gain.setTargetAtTime(rVol, t, 0.035);
+        this.rumbleFilter.frequency.setTargetAtTime(85 + thrustNorm * 125 + groundEffect * 75, t, 0.04);
+        this.crackleGain.gain.setTargetAtTime(cVol, t, 0.03);
+        this.crackleFilter.frequency.setTargetAtTime(440 + thrustNorm * 820 + Math.random() * 140, t, 0.03);
+
+        const windNorm = Math.min(1, (airSpeed / 70) * (0.35 + aoaFactor * 0.65));
+        this.windGain.gain.setTargetAtTime(windNorm * 0.22, t, 0.08);
+        this.windFilter.frequency.setTargetAtTime(175 + airSpeed * 7.2, t, 0.08);
+
+        this.rcsGain.gain.setTargetAtTime(rcsActive ? 0.12 : 0, t, 0.02);
+      }
+
+      playCatchClank(intensity = 0.6) {
+        if (!this.initialized || !this.enabled || !this.ctx) return;
+        const t = this.ctx.currentTime;
+
+        // 1. Heavy hydraulic cylinder slam & thud
+        const bass = this.ctx.createOscillator();
+        const bGain = this.ctx.createGain();
+        bass.type = 'triangle';
+        bass.frequency.setValueAtTime(125, t);
+        bass.frequency.exponentialRampToValueAtTime(24, t + 0.38);
+        bGain.gain.setValueAtTime(Math.min(0.95, 0.42 + intensity * 0.52), t);
+        bGain.gain.exponentialRampToValueAtTime(0.001, t + 0.44);
+        bass.connect(bGain);
+        bGain.connect(this.masterGain);
+        bass.start(t);
+        bass.stop(t + 0.46);
+
+        // 2. Metallic steel-on-steel CLANK resonance
+        [320, 610, 920, 1420].forEach((freq, i) => {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = i % 2 === 0 ? 'square' : 'triangle';
+          osc.frequency.setValueAtTime(freq, t);
+          osc.frequency.exponentialRampToValueAtTime(freq * 0.93, t + 0.28);
+          const flt = this.ctx.createBiquadFilter();
+          flt.type = 'bandpass';
+          flt.frequency.value = freq;
+          flt.Q.value = 4.2;
+          g.gain.setValueAtTime(Math.min(0.24, (0.11 + intensity * 0.13) / (1 + i * 0.45)), t);
+          g.gain.exponentialRampToValueAtTime(0.001, t + 0.24 + i * 0.05);
+          osc.connect(flt);
+          flt.connect(g);
+          g.connect(this.masterGain);
+          osc.start(t);
+          osc.stop(t + 0.38);
+        });
+
+        // 3. Hydraulic servo lock whine & pneumatic cushion vent
+        const servo = this.ctx.createOscillator();
+        const sGain = this.ctx.createGain();
+        servo.type = 'sawtooth';
+        servo.frequency.setValueAtTime(240, t);
+        servo.frequency.exponentialRampToValueAtTime(95, t + 0.42);
+        const sFlt = this.ctx.createBiquadFilter();
+        sFlt.type = 'lowpass';
+        sFlt.frequency.value = 480;
+        sGain.gain.setValueAtTime(0.11, t);
+        sGain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+        servo.connect(sFlt);
+        sFlt.connect(sGain);
+        sGain.connect(this.masterGain);
+        servo.start(t);
+        servo.stop(t + 0.48);
+
+        const src = this.ctx.createBufferSource();
+        src.buffer = this.whiteBuf;
+        const flt = this.ctx.createBiquadFilter();
+        flt.type = 'bandpass';
+        flt.frequency.value = 1850;
+        const hGain = this.ctx.createGain();
+        hGain.gain.setValueAtTime(0.18, t + 0.04);
+        hGain.gain.exponentialRampToValueAtTime(0.001, t + 0.56);
+        src.connect(flt);
+        flt.connect(hGain);
+        hGain.connect(this.masterGain);
+        src.start(t + 0.03);
+        src.stop(t + 0.6);
+      }
+
+      playProxBeep(urgent = false) {
+        if (!this.initialized || !this.enabled || !this.ctx) return;
+        const now = performance.now();
+        const minGap = urgent ? 230 : 520;
+        if (now - this.lastProxBeep < minGap) return;
+        this.lastProxBeep = now;
+
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = urgent ? 'square' : 'sine';
+        osc.frequency.value = urgent ? 980 : 760;
+        gain.gain.setValueAtTime(urgent ? 0.065 : 0.042, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.1);
+      }
+
+      playCashChime(isBullseye = false) {
+        if (!this.initialized || !this.enabled || !this.ctx) return;
+        const t = this.ctx.currentTime;
+        const notes = isBullseye ? [523.25, 659.25, 783.99, 1046.5, 1318.5] : [523.25, 659.25, 783.99, 1046.5];
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          const st = t + idx * 0.075;
+          gain.gain.setValueAtTime(0.001, st);
+          gain.gain.linearRampToValueAtTime(0.12, st + 0.015);
+          gain.gain.exponentialRampToValueAtTime(0.001, st + 0.42);
+          osc.connect(gain);
+          gain.connect(this.masterGain);
+          osc.start(st);
+          osc.stop(st + 0.45);
+        });
+      }
+
+      playClick(pitch = 620) {
+        if (!this.initialized || !this.enabled || !this.ctx) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(pitch, t);
+        osc.frequency.exponentialRampToValueAtTime(pitch * 1.25, t + 0.06);
+        gain.gain.setValueAtTime(0.07, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.09);
+      }
+
+      playExplosion() {
+        if (!this.initialized || !this.enabled || !this.ctx) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const oGain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(118, t);
+        osc.frequency.exponentialRampToValueAtTime(16, t + 1.5);
+        oGain.gain.setValueAtTime(0.95, t);
+        oGain.gain.exponentialRampToValueAtTime(0.001, t + 1.65);
+        osc.connect(oGain);
+        oGain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 1.7);
+
+        const src = this.ctx.createBufferSource();
+        src.buffer = this.brownBuf;
+        const flt = this.ctx.createBiquadFilter();
+        flt.type = 'lowpass';
+        flt.frequency.setValueAtTime(1750, t);
+        flt.frequency.exponentialRampToValueAtTime(110, t + 2.3);
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(1.0, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 2.4);
+        src.connect(flt);
+        flt.connect(gain);
+        gain.connect(this.masterGain);
+        src.start(t);
+        src.stop(t + 2.45);
+      }
+    }
+
+    const sound = new SoundEngine();
+
+    /* =========================================================================
+       4. CANVAS SETUP & ENVIRONMENT ASSETS
+       ========================================================================= */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let viewW = window.innerWidth;
+    let viewH = window.innerHeight;
+
+    function resizeCanvas() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      viewW = window.innerWidth;
+      viewH = window.innerHeight;
+      canvas.width = Math.floor(viewW * dpr);
+      canvas.height = Math.floor(viewH * dpr);
+      canvas.style.width = viewW + 'px';
+      canvas.style.height = viewH + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    const stars = Array.from({ length: 165 }, () => ({
+      x: Math.random(),
+      y: Math.random() * 0.78,
+      r: 0.6 + Math.random() * 1.45,
+      twinkle: Math.random() * Math.PI * 2
+    }));
+
+    const clouds = Array.from({ length: 30 }, (_, i) => {
+      const layer = i % 3;
+      return {
+        x: (Math.random() - 0.5) * 3000,
+        y: 120 + Math.random() * 880,
+        w: 110 + Math.random() * 230,
+        h: 26 + Math.random() * 44,
+        layer,
+        parallax: 0.25 + layer * 0.22,
+        alpha: 0.14 + layer * 0.10,
+        puffs: Array.from({ length: 5 }, () => ({
+          ox: (Math.random() - 0.5) * 0.75,
+          oy: (Math.random() - 0.5) * 0.4,
+          sr: 0.35 + Math.random() * 0.45
+        }))
+      };
+    });
+
+    const raindrops = Array.from({ length: 130 }, () => ({
+      x: Math.random(),
+      y: Math.random(),
+      len: 12 + Math.random() * 18,
+      spd: 0.8 + Math.random() * 0.5
+    }));
+
+    /* =========================================================================
+       5. SIMULATION STATE (NO LANDING LEGS — MECHAZILLA CHOPSTICKS SYSTEM)
+       ========================================================================= */
+    let currentMissionIdx = profile.selectedMission || 0;
+    let simTime = 0;
+    let gameState = 'flying'; // 'flying' | 'caught' | 'crashed'
+    let settledTimer = 0;
+    let catchStats = { vy: 0, vx: 0, angleDeg: 0, offsetX: 0 };
+    let toastTimer = null;
+    let lightningFlash = 0;
+
+    // Keyboard state strictly keyed by event.code (100% Thai keyboard safe!)
+    const keys = Object.create(null);
+    const pointerCtrl = { left: false, right: false, fire: false, cut: false };
+
+    // Camera Mode ('follow' = Follow Rocket, 'tower' = Zoomed Catch Zone View)
+    const cam = {
+      mode: 'follow',
+      x: 40,
+      y: 450,
+      scale: 4.2,
+      shake: 0,
+      shakeX: 0,
+      shakeY: 0
+    };
+
+    // AI Catch Autopilot State
+    const autoLand = {
+      enabled: false,
+      phase: 'IDLE',
+      targetOffsetX: 0,
+      wobbleSeed: 0,
+      flipStarted: false
+    };
+
+    // Mechazilla Chopsticks Mechanical State
+    const arms = {
+      carriageY: CATCH_Y,
+      dipY: 0,
+      dipVy: 0,
+      open: 1,          // 1 = wide open welcoming Starship, 0 = clamped shut
+      openTarget: 1,
+      caught: false,
+      catchPinX: 0,
+      sparkFlash: 0,
+      beaconActive: false
+    };
+
+    const ship = {
+      x: 64, y: 465,
+      vx: -7.5, vy: -18,
+      angle: -76 * Math.PI / 180,
+      omega: 0,
+      dryMass: 100000,
+      fuel: 36000,
+      maxFuel: 36000,
+      throttleTarget: 0,
+      throttleHold: 0,
+      throttleActual: 0,
+      engineMode: 'auto', // 'auto' | 1 | 2 | 3
+      activeEngines: 3,
+      gimbalAngle: 0,
+      flapFwd: 0.5,
+      flapAft: 0.5,
+      rcsDir: 0,
+      aoaHeat: 0,
+      groundEffect: 0,
+      towerEffect: 0
+    };
+
+    const env = {
+      windX: 0,
+      windBase: -1.1,
+      windGust: 0.8,
+      windsockPhase: 0,
+      theme: 'daylight',
+      rain: false
+    };
+
+    let particles = [];
+    let debris = [];
+    let shockwaves = [];
+    let tankVaporTimer = 0;
+    let shipCryoTimer = 0;
+    let qdVaporTimer = 0;
+
+    function getGroundY(wx) {
+      return Math.abs(wx) <= APRON_HALF_W ? 0 : -0.7;
+    }
+
+    function getComOffset() {
+      const f = ship.maxFuel > 0 ? ship.fuel / ship.maxFuel : 0;
+      return -2.0 - f * 1.3;
+    }
+
+    function normalizeAngle(a) {
+      while (a > Math.PI) a -= Math.PI * 2;
+      while (a < -Math.PI) a += Math.PI * 2;
+      return a;
+    }
+
+    function localToWorld(lx, ly, x = ship.x, y = ship.y, angle = ship.angle) {
+      const c = Math.cos(angle);
+      const s = Math.sin(angle);
+      return {
+        x: x + lx * c + ly * s,
+        y: y - lx * s + ly * c
+      };
+    }
+
+    function getCatchPinWorld() {
+      return localToWorld(0, CATCH_PIN_LOCAL_Y - getComOffset());
+    }
+
+    function worldToScreen(wx, wy) {
+      return {
+        x: viewW * 0.5 + (wx - cam.x) * cam.scale + cam.shakeX,
+        y: viewH * 0.54 - (wy - cam.y) * cam.scale + cam.shakeY
+      };
+    }
+
+    function showToast(msg, colorClass = 'text-amber-200 border-amber-400/50') {
+      const el = document.getElementById('statusToast');
+      el.textContent = msg;
+      el.className = `fixed top-40 left-1/2 -translate-x-1/2 z-30 pointer-events-none hud-panel rounded-full px-4 py-1.5 text-xs font-semibold shadow-lg ${colorClass} toast-anim`;
+      void el.offsetWidth;
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        el.classList.add('hidden');
+      }, 2400);
+    }
+
+    function startMission(idx = currentMissionIdx) {
+      currentMissionIdx = idx;
+      profile.selectedMission = idx;
+      saveProfile();
+
+      const m = MISSIONS[idx];
+      const specs = getShipSpecs();
+
+      simTime = 0;
+      gameState = 'flying';
+      settledTimer = 0;
+      catchStats = { vy: 0, vx: 0, angleDeg: 0, offsetX: 0 };
+
+      ship.dryMass = 100000 + m.extraMass;
+      ship.maxFuel = Math.round(m.fuelMass * specs.fuelCapMult);
+      ship.fuel = ship.maxFuel;
+
+      const randJitter = (Math.random() - 0.5) * 16;
+      ship.x = m.startX + randJitter;
+      ship.y = m.startY;
+      ship.vx = m.startVx;
+      ship.vy = m.startVy;
+      ship.angle = m.startAngle;
+      ship.omega = 0;
+      ship.throttleTarget = 0;
+      ship.throttleHold = 0;
+      ship.throttleActual = 0;
+      ship.engineMode = 'auto';
+      ship.activeEngines = 3;
+      ship.gimbalAngle = 0;
+      ship.flapFwd = 0.5;
+      ship.flapAft = 0.5;
+      ship.rcsDir = 0;
+      ship.aoaHeat = 0;
+      ship.groundEffect = 0;
+      ship.towerEffect = 0;
+
+      // Reset Mechazilla Chopsticks wide open and ready
+      arms.carriageY = CATCH_Y;
+      arms.dipY = 0;
+      arms.dipVy = 0;
+      arms.open = 1;
+      arms.openTarget = 1;
+      arms.caught = false;
+      arms.catchPinX = 0;
+      arms.sparkFlash = 0;
+      arms.beaconActive = false;
+
+      // Reset AI Catch Autopilot with natural human-like spread improving with AI Lv.
+      autoLand.enabled = false;
+      autoLand.phase = 'IDLE';
+      autoLand.flipStarted = false;
+      const aiSpread = Math.max(0.3, (6 - specs.aiLevel) * 0.9);
+      autoLand.targetOffsetX = Math.max(-1.6, (Math.random() - 0.42) * 2 * aiSpread);
+      autoLand.wobbleSeed = Math.random() * 100;
+
+      env.windBase = m.windBase;
+      env.windGust = m.windGust;
+      env.windX = m.windBase;
+      env.theme = m.theme;
+      env.rain = m.rain;
+
+      if (cam.mode === 'follow') {
+        cam.x = ship.x * 0.85;
+        cam.y = ship.y - 10;
+        cam.scale = Math.max(2.6, Math.min(5.8, viewH / 168));
+      }
+      cam.shake = 0;
+
+      particles = [];
+      debris = [];
+      shockwaves = [];
+
+      document.getElementById('resultModal').classList.add('hidden');
+      document.getElementById('hangarModal').classList.add('hidden');
+      document.getElementById('missionsModal').classList.add('hidden');
+
+      updateTopBarUI();
+      updateControlsUI();
+      focusGame();
+    }
+
+    function focusGame() {
+      try {
+        window.focus();
+        canvas.focus({ preventScroll: true });
+      } catch (e) {}
+    }
+
+    function setAutoLand(enabled, reasonToast = null) {
+      if (gameState !== 'flying') return;
+      autoLand.enabled = enabled;
+      if (enabled) {
+        ship.engineMode = 'auto';
+        sound.playClick(760);
+        showToast(reasonToast || `🤖 เปิด AI คีบอัตโนมัติ (AI Lv.${profile.upgrades.ai})`, 'text-emerald-200 border-emerald-400/60');
+      } else {
+        sound.playClick(440);
+        if (reasonToast) {
+          showToast(reasonToast, 'text-amber-200 border-amber-400/60');
+        }
+      }
+      updateControlsUI();
+    }
+
+    function toggleCameraMode() {
+      cam.mode = cam.mode === 'follow' ? 'tower' : 'follow';
+      sound.playClick(680);
+      showToast(
+        cam.mode === 'tower' ? '🎥 มุมกล้อง: ซูมใกล้แขนคีบ Mechazilla' : '🎥 มุมกล้อง: ติดตามจรวด Starship',
+        'text-sky-200 border-sky-400/60'
+      );
+      updateControlsUI();
+    }
+
+    /* =========================================================================
+       6. NATURAL PHYSICS-BASED AI CATCH AUTOPILOT (TARGETS MECHAZILLA ARMS)
+       ========================================================================= */
+    function computeAutoCatchCommands(specs, mass) {
+      const aiLv = specs.aiLevel;
+      const pinPos = getCatchPinWorld();
+      const armY = arms.carriageY + arms.dipY;
+      const altAboveArms = pinPos.y - armY;
+      const normAng = normalizeAngle(ship.angle);
+      const absAng = Math.abs(normAng);
+
+      // Subtle organic oscillation so autopilot feels physical & alive (tightens as AI upgrades)
+      const imperfectScale = (6 - aiLv) * 0.20;
+      const wobble = Math.sin(simTime * 1.85 + autoLand.wobbleSeed) * 0.04 * imperfectScale;
+      const targetX = autoLand.targetOffsetX + Math.sin(simTime * 0.72 + autoLand.wobbleSeed) * 0.52 * imperfectScale;
+
+      // Safe flip altitude calculation above CATCH_Y
+      const maxAccel = (3 * specs.raptorThrust) / mass - G;
+      const stopDist = (ship.vy * ship.vy) / Math.max(9, 2 * maxAccel * 0.54);
+      const flipMargin = 120 + (6 - aiLv) * 10;
+      const flipAltAboveArms = Math.max(185, Math.min(280, stopDist + flipMargin));
+
+      if (altAboveArms <= flipAltAboveArms || absAng < 0.44) {
+        autoLand.flipStarted = true;
+      }
+
+      // --- PHASE 1: BELLY FLOP GLIDE (approach cleanly from seaward +X side) ---
+      if (!autoLand.flipStarted && altAboveArms > flipAltAboveArms && absAng > 0.48) {
+        autoLand.phase = 'BELLY FLOP GLIDE';
+        const sign = normAng >= 0 ? 1 : -1;
+        const glideTargetX = targetX + 18;
+        const errX = glideTargetX - ship.x;
+        const desiredVx = Math.max(-24, Math.min(24, errX * 0.16));
+        const vxErr = desiredVx - ship.vx;
+        const glidePitchAdjust = Math.max(-0.34, Math.min(0.34, vxErr * 0.032));
+        const targetAngle = sign * (Math.PI * 0.47) + glidePitchAdjust + wobble;
+        const angErr = normalizeAngle(targetAngle - normAng);
+        const steer = Math.max(-1, Math.min(1, angErr * 3.8 - ship.omega * 2.2));
+        return { steer, throttle: 0, engines: 3 };
+      }
+
+      // --- PHASE 2: FLIP & BURN MANEUVER ---
+      if (absAng > 0.30) {
+        autoLand.phase = 'FLIP & BURN';
+        const steer = Math.max(-1, Math.min(1, -normAng * 4.6 - ship.omega * 2.15));
+        const thr = altAboveArms < 275 ? 0.94 : 0.75;
+        return { steer, throttle: thr, engines: 3 };
+      }
+
+      // --- PHASE 3: TOWER ALIGNMENT & CHOPSTICKS CAPTURE ---
+      // If engaged late and rocket drifted below arms, climb smoothly back up while sliding right of tower!
+      if (altAboveArms < -2.5) {
+        autoLand.phase = 'CLIMB RECOVERY';
+        const safeGoalX = Math.max(targetX, 6);
+        const desiredVx = Math.max(-8, Math.min(10, (safeGoalX - pinPos.x) * 0.35));
+        let targetAngle = (desiredVx - ship.vx) * 0.035;
+        targetAngle = Math.max(-0.18, Math.min(0.22, targetAngle));
+        const steer = Math.max(-1, Math.min(1, normalizeAngle(targetAngle - normAng) * 5.0 - ship.omega * 2.6));
+        const reqThrust = mass * (G + (4.5 - ship.vy) * 1.8) / Math.max(0.6, Math.cos(normAng));
+        const engines = reqThrust > specs.raptorThrust * 1.65 ? 3 : reqThrust > specs.raptorThrust * 0.85 ? 2 : 1;
+        const thr = Math.max(0, Math.min(1, (reqThrust / (engines * specs.raptorThrust) - 0.12) / 0.88));
+        return { steer, throttle: thr, engines };
+      }
+
+      const holdStandOff = altAboveArms > 65 ? 10 : Math.max(0, (altAboveArms - 30) * 0.28);
+      const goalX = targetX + holdStandOff;
+      const errX = goalX - pinPos.x;
+
+      if (altAboveArms < 32 && Math.abs(pinPos.x - targetX) < 6) {
+        autoLand.phase = 'CHOPSTICKS CAPTURE';
+      } else if (altAboveArms < 85) {
+        autoLand.phase = 'TOWER ALIGNMENT';
+      } else {
+        autoLand.phase = 'LANDING BURN';
+      }
+
+      // Tower structure safety guardrail (TOWER_RIGHT_X = -19m)
+      const towerGuardTilt = pinPos.x < -5.8 ? Math.min(0.24, (-5.8 - pinPos.x) * 0.055) : 0;
+
+      const windComp = -env.windX * (0.0115 * (0.60 + aiLv * 0.10));
+      const maxVxCmd = altAboveArms < 20 ? 4.8 : altAboveArms < 70 ? 11.5 : 20;
+      const kpX = altAboveArms < 35 ? 0.35 : 0.22;
+      const desiredVx = Math.max(-maxVxCmd, Math.min(maxVxCmd, errX * kpX));
+      const vxErr = desiredVx - ship.vx;
+
+      const maxTilt = altAboveArms < 15 ? 0.13 : altAboveArms < 45 ? 0.22 : 0.28;
+      let targetAngle = vxErr * 0.038 + windComp + towerGuardTilt + wobble * (altAboveArms < 18 ? 0.32 : 0.85);
+      targetAngle = Math.max(-maxTilt, Math.min(maxTilt, targetAngle));
+
+      const angErr = normalizeAngle(targetAngle - normAng);
+      const steer = Math.max(-1, Math.min(1, angErr * 5.4 - ship.omega * 2.8));
+
+      // Vertical sink schedule: hover right above chopsticks if still sliding horizontally into the zone!
+      const catchSpeed = -(2.75 - aiLv * 0.28); // Lv.1 ~ -2.47 m/s, Lv.5 ~ -1.35 m/s
+      const horizNotReady = Math.abs(pinPos.x - targetX) > 3.8 && altAboveArms < 28 && altAboveArms > -2;
+
+      let desiredVy;
+      if (horizNotReady) {
+        desiredVy = altAboveArms < 10 ? 1.5 : -0.5;
+      } else if (altAboveArms < 10) {
+        desiredVy = catchSpeed;
+      } else if (altAboveArms < 52) {
+        desiredVy = catchSpeed - (altAboveArms - 10) * 0.21;
+      } else {
+        const brakeA = Math.min(14.8, maxAccel * 0.48);
+        desiredVy = -Math.min(35, Math.sqrt(2 * brakeA * Math.max(0, altAboveArms - 12)) + 4.2);
+      }
+
+      const vyErr = desiredVy - ship.vy;
+      const aCmdY = G + vyErr * (altAboveArms < 32 ? 1.95 : 1.4);
+      const cosA = Math.max(0.55, Math.cos(normAng));
+      const reqThrust = Math.max(0, (mass * aCmdY) / cosA);
+
+      let engines = 1;
+      if (reqThrust > specs.raptorThrust * 1.72) engines = 3;
+      else if (reqThrust > specs.raptorThrust * 0.86) engines = 2;
+
+      const maxEngThrust = engines * specs.raptorThrust;
+      let throttle = 0;
+      if (reqThrust > maxEngThrust * 0.05) {
+        const ratio = reqThrust / maxEngThrust;
+        throttle = Math.max(0, Math.min(1, (ratio - 0.12) / 0.88));
+      }
+
+      return { steer, throttle, engines };
+    }
+
+    /* =========================================================================
+       7. PARTICLE, CATCH SPARKS, TOWER IMPINGEMENT & RUD EXPLOSION SPAWNERS
+       ========================================================================= */
+    function spawnParticle(p) {
+      if (particles.length > 620) particles.shift();
+      particles.push(p);
+    }
+
+    function spawnPlumeParticles() {
+      if (ship.throttleActual <= 0.02 || ship.fuel <= 0 || ship.activeEngines === 0) return;
+
+      const comOff = getComOffset();
+      const exhaustLocalY = NOZZLE_LOCAL_Y - comOff;
+      const thrustWorldAngle = ship.angle + ship.gimbalAngle;
+      const dirX = -Math.sin(thrustWorldAngle);
+      const dirY = -Math.cos(thrustWorldAngle);
+
+      const rate = Math.ceil(ship.activeEngines * ship.throttleActual * 2);
+      for (let i = 0; i < rate; i++) {
+        if (Math.random() > 0.58) continue;
+        const spread = (Math.random() - 0.5) * 3.0;
+        const pt = localToWorld(spread, exhaustLocalY - 3);
+        const speed = 34 + ship.throttleActual * 54;
+        spawnParticle({
+          type: 'exhaust',
+          x: pt.x,
+          y: pt.y,
+          vx: ship.vx + dirX * speed + (Math.random() - 0.5) * 8,
+          vy: ship.vy + dirY * speed + (Math.random() - 0.5) * 8,
+          r: 2.2 + Math.random() * 2.5,
+          grow: 14,
+          life: 0,
+          maxLife: 0.24 + Math.random() * 0.22,
+          alpha: 0.22 * ship.throttleActual,
+          color: '220, 235, 255'
+        });
+      }
+
+      // Ground concrete pad & flame trench steam + dust + sparks impingement
+      if (ship.groundEffect > 0.02) {
+        const ge = ship.groundEffect;
+        const nozzleWorld = localToWorld(0, exhaustLocalY);
+        const tHit = dirY < -0.15 ? Math.max(0, nozzleWorld.y / -dirY) : 0;
+        const hitX = nozzleWorld.x + dirX * Math.min(tHit, 95);
+        const groundY = getGroundY(hitX);
+
+        const cloudCount = Math.ceil(ge * (3 + ship.activeEngines * 2.2));
+        for (let i = 0; i < cloudCount; i++) {
+          const side = Math.random() < 0.5 ? -1 : 1;
+          const outSpeed = (22 + Math.random() * 54) * (0.45 + ge * 0.95);
+          const isTrenchSteam = Math.abs(hitX) <= 22;
+          spawnParticle({
+            type: 'steam',
+            x: hitX + (Math.random() - 0.5) * 9,
+            y: groundY + 1.0 + Math.random() * 2.8,
+            vx: side * outSpeed + env.windX * 0.65,
+            vy: 2.0 + Math.random() * 11.5 * ge,
+            r: 4.0 + Math.random() * 6.0,
+            grow: 14 + Math.random() * 14,
+            life: 0,
+            maxLife: 0.85 + Math.random() * 1.25,
+            alpha: (0.36 + ge * 0.44) * (isTrenchSteam ? 1 : 0.86),
+            color: isTrenchSteam ? '238, 246, 255' : '196, 178, 150'
+          });
+        }
+
+        if (ge > 0.22) {
+          const sparkCount = Math.ceil(ge * ship.activeEngines * 2.2);
+          for (let i = 0; i < sparkCount; i++) {
+            const side = Math.random() < 0.5 ? -1 : 1;
+            const sp = (26 + Math.random() * 68) * ge;
+            spawnParticle({
+              type: 'spark',
+              x: hitX + (Math.random() - 0.5) * 6,
+              y: groundY + 0.8,
+              vx: side * sp,
+              vy: 4 + Math.random() * 20 * ge,
+              r: 0.55 + Math.random() * 0.75,
+              grow: 0,
+              life: 0,
+              maxLife: 0.28 + Math.random() * 0.36,
+              alpha: 0.96,
+              color: Math.random() < 0.4 ? '255, 238, 175' : '255, 145, 50'
+            });
+          }
+        }
+      }
+
+      // Tower structure exhaust wash steam & sparks when firing close to Mechazilla!
+      if (ship.towerEffect > 0.05) {
+        const te = ship.towerEffect;
+        const nozzleWorld = localToWorld(0, exhaustLocalY);
+        const washY = Math.max(4, Math.min(TOWER_HEIGHT - 4, nozzleWorld.y - 8));
+        if (Math.random() < 0.75) {
+          spawnParticle({
+            type: 'steam',
+            x: TOWER_RIGHT_X + 1.2,
+            y: washY + (Math.random() - 0.5) * 8,
+            vx: -14 * te + env.windX * 0.4,
+            vy: (Math.random() - 0.4) * 10,
+            r: 3.2 + Math.random() * 3.5,
+            grow: 11,
+            life: 0,
+            maxLife: 0.7 + Math.random() * 0.6,
+            alpha: 0.36 * te,
+            color: '232, 242, 255'
+          });
+        }
+        if (Math.random() < 0.45 * te) {
+          spawnParticle({
+            type: 'spark',
+            x: TOWER_RIGHT_X + 0.8,
+            y: washY + (Math.random() - 0.5) * 6,
+            vx: 8 + Math.random() * 18,
+            vy: (Math.random() - 0.5) * 14,
+            r: 0.5 + Math.random() * 0.55,
+            grow: 0,
+            life: 0,
+            maxLife: 0.25 + Math.random() * 0.25,
+            alpha: 0.9,
+            color: '255, 195, 95'
+          });
+        }
+      }
+    }
+
+    function spawnCatchSparks(wx, wy, intensity = 0.7) {
+      const count = Math.ceil(22 + intensity * 28);
+      for (let i = 0; i < count; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = (6 + Math.random() * 28) * (0.5 + intensity * 0.8);
+        const isSteam = i > count * 0.68;
+        spawnParticle({
+          type: isSteam ? 'steam' : 'spark',
+          x: wx + (Math.random() - 0.5) * 9,
+          y: wy + (Math.random() - 0.5) * 2.4,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd + (isSteam ? 5 : 6),
+          r: isSteam ? 2.6 : (0.65 + Math.random() * 0.75),
+          grow: isSteam ? 8 : 0,
+          life: 0,
+          maxLife: isSteam ? 0.75 : (0.35 + Math.random() * 0.48),
+          alpha: isSteam ? 0.55 : 0.98,
+          color: isSteam ? '228, 242, 255' : (Math.random() < 0.42 ? '255, 248, 200' : '255, 165, 55')
+        });
+      }
+    }
+
+    function spawnRcsParticles() {
+      if (ship.rcsDir === 0) return;
+      const comOff = getComOffset();
+      const side = ship.rcsDir > 0 ? -1 : 1;
+      const c = Math.cos(ship.angle);
+      const s = Math.sin(ship.angle);
+      const jx = side * c;
+      const jy = -side * s;
+
+      [
+        { lx: side * 2.3, ly: 20.5 - comOff, dir: 1 },
+        { lx: -side * 4.4, ly: -19.5 - comOff, dir: -1 }
+      ].forEach((vent) => {
+        const pt = localToWorld(vent.lx, vent.ly);
+        spawnParticle({
+          type: 'rcs',
+          x: pt.x,
+          y: pt.y,
+          vx: ship.vx + jx * vent.dir * (22 + Math.random() * 12),
+          vy: ship.vy + jy * vent.dir * (22 + Math.random() * 12),
+          r: 0.9 + Math.random() * 0.8,
+          grow: 5.5,
+          life: 0,
+          maxLife: 0.2 + Math.random() * 0.14,
+          alpha: 0.55,
+          color: '230, 245, 255'
+        });
+      });
+    }
+
+    function triggerRUD(reason) {
+      if (gameState === 'crashed') return;
+      gameState = 'crashed';
+      autoLand.enabled = false;
+      ship.throttleTarget = 0;
+      ship.throttleActual = 0;
+      cam.shake = 32;
+      sound.playExplosion();
+
+      const fuelRatio = 0.4 + (ship.fuel / Math.max(1, ship.maxFuel)) * 0.6;
+      const cx = ship.x;
+      const cy = Math.max(5, ship.y);
+
+      shockwaves.push({ x: cx, y: cy, r: 4, maxR: 150 * fuelRatio, life: 0, maxLife: 0.68 });
+
+      for (let i = 0; i < 98; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = 8 + Math.random() * 64 * fuelRatio;
+        const isFire = i < 58;
+        spawnParticle({
+          type: isFire ? 'fire' : 'smoke',
+          x: cx + (Math.random() - 0.5) * 14,
+          y: cy + (Math.random() - 0.5) * 18,
+          vx: ship.vx * 0.35 + Math.cos(ang) * spd,
+          vy: Math.abs(Math.sin(ang)) * spd * 0.9 + 6,
+          r: isFire ? (4.5 + Math.random() * 9.5) : (7 + Math.random() * 12),
+          grow: isFire ? 18 : 14,
+          life: 0,
+          maxLife: isFire ? (0.65 + Math.random() * 0.85) : (1.8 + Math.random() * 2.2),
+          alpha: isFire ? 0.95 : 0.72,
+          color: isFire
+            ? (Math.random() < 0.35 ? '255, 248, 210' : '255, 115, 30')
+            : '36, 40, 48'
+        });
+      }
+
+      for (let i = 0; i < 65; i++) {
+        const ang = Math.random() * Math.PI;
+        const spd = 20 + Math.random() * 82;
+        spawnParticle({
+          type: 'spark',
+          x: cx + (Math.random() - 0.5) * 10,
+          y: cy + Math.random() * 12,
+          vx: Math.cos(ang) * spd * (Math.random() < 0.5 ? -1 : 1),
+          vy: Math.sin(ang) * spd + 10,
+          r: 0.8 + Math.random() * 1.1,
+          grow: 0,
+          life: 0,
+          maxLife: 0.9 + Math.random() * 1.4,
+          alpha: 1,
+          color: '255, 200, 90'
+        });
+      }
+
+      const kinds = ['nose', 'hull', 'hull', 'hull', 'flap', 'flap', 'flap', 'raptor', 'raptor', 'raptor', 'tile', 'tile', 'tile', 'pin', 'pin'];
+      kinds.forEach((kind) => {
+        const pLocal = localToWorld((Math.random() - 0.5) * 7, (Math.random() - 0.5) * 38);
+        const outAngle = Math.random() * Math.PI;
+        const spd = 14 + Math.random() * 44;
+        debris.push({
+          kind,
+          x: pLocal.x,
+          y: Math.max(2, pLocal.y),
+          vx: ship.vx * 0.4 + Math.cos(outAngle) * spd * (Math.random() < 0.5 ? -1 : 1),
+          vy: Math.sin(outAngle) * spd + 12,
+          angle: ship.angle + (Math.random() - 0.5) * 2,
+          omega: (Math.random() - 0.5) * 10,
+          w: kind === 'nose' ? 8.5 : kind === 'hull' ? 9 : kind === 'flap' ? 7 : 3,
+          h: kind === 'nose' ? 11 : kind === 'hull' ? 5.5 : kind === 'flap' ? 4 : 3,
+          burning: Math.random() < 0.65,
+          life: 0
+        });
+      });
+
+      updateControlsUI();
+      setTimeout(() => {
+        if (gameState === 'crashed') {
+          completeFlightAndPayout('rud', reason);
+        }
+      }, 1350);
+    }
+
+    /* =========================================================================
+       8. CHOPSTICKS CAPTURE CHECK & FIXED SUB-STEP PHYSICS ENGINE
+       ========================================================================= */
+    function tryChopsticksCatch(specs) {
+      if (arms.caught || gameState !== 'flying') return false;
+
+      const pinPos = getCatchPinWorld();
+      const armY = arms.carriageY + arms.dipY;
+      const dy = pinPos.y - armY;
+      const absX = Math.abs(pinPos.x);
+      const tiltDeg = Math.abs(normalizeAngle(ship.angle) * 180 / Math.PI);
+      const vDown = -ship.vy;
+      const absVx = Math.abs(ship.vx);
+
+      // Must pass right onto the cushioned Catch Rail horizontally & vertically while descending
+      if (absX > specs.catchHalfWidth || dy > 2.8 || dy < -3.6 || ship.vy > 1.8) {
+        return false;
+      }
+
+      // Check structural limits of Mechazilla Chopsticks & Hydraulic Absorbers!
+      if (vDown > specs.maxSafeVy + 3.2) {
+        spawnCatchSparks(pinPos.x, armY, 1.0);
+        triggerRUD(`ความเร็วพุ่งเข้าแขนคีบสูงเกินขีดจำกัด (${vDown.toFixed(1)} ม/วิ > ${(specs.maxSafeVy + 3.2).toFixed(1)} ม/วิ)`);
+        return true;
+      }
+      if (absVx > specs.maxSafeVx + 3.5) {
+        spawnCatchSparks(pinPos.x, armY, 1.0);
+        triggerRUD(`ความเร็วแนวนอนฟาดแขนคีบแรงเกินไป (${absVx.toFixed(1)} ม/วิ)`);
+        return true;
+      }
+      if (tiltDeg > specs.maxSafeTiltDeg + 10) {
+        spawnCatchSparks(pinPos.x, armY, 1.0);
+        triggerRUD(`จรวดเอียงเกินเกณฑ์ (${tiltDeg.toFixed(1)}°) หมุดคีบหลุดจากแขน Mechazilla!`);
+        return true;
+      }
+
+      // === SUCCESSFUL MECHAZILLA CHOPSTICKS LOCK! ===
+      arms.caught = true;
+      arms.openTarget = 0; // Swing arms closed immediately!
+      arms.catchPinX = Math.max(-specs.catchHalfWidth, Math.min(specs.catchHalfWidth, pinPos.x));
+      arms.sparkFlash = 1.0;
+
+      // Transfer vertical impact momentum into the hydraulic shock absorber spring-damper
+      arms.dipVy = Math.min(-0.8, ship.vy * 0.85);
+
+      // Convert residual horizontal drift into realistic damped pendulum sway
+      ship.omega += ship.vx * 0.022;
+      ship.vx *= 0.14;
+
+      catchStats = {
+        vy: Math.abs(ship.vy),
+        vx: absVx,
+        angleDeg: tiltDeg,
+        offsetX: absX
+      };
+
+      // MECO — Shut down Raptor engines automatically on capture
+      autoLand.enabled = false;
+      ship.throttleTarget = 0;
+      ship.throttleHold = 0;
+      gameState = 'caught';
+      settledTimer = 0;
+
+      const impactNorm = Math.min(1, Math.abs(ship.vy) / 10.0);
+      sound.playCatchClank(impactNorm);
+      cam.shake = Math.max(cam.shake, 4.5 + impactNorm * 11);
+      spawnCatchSparks(arms.catchPinX, armY, 0.5 + impactNorm * 0.7);
+      showToast('🦾 MECHAZILLA คีบล็อก STARSHIP สำเร็จ! (MECO)', 'text-emerald-200 border-emerald-400/70');
+      updateControlsUI();
+      return true;
+    }
+
+    function updatePhysics(dt) {
+      simTime += dt;
+
+      // Dynamic wind + altitude shear
+      const altFactor = 0.65 + Math.min(1.05, ship.y / 700);
+      const gust = Math.sin(simTime * 0.62) * 0.6 + Math.sin(simTime * 1.48 + 1.3) * 0.4;
+      env.windX = (env.windBase + gust * env.windGust) * altFactor;
+      env.windsockPhase += dt * (4 + Math.abs(env.windX) * 1.6);
+
+      if (env.rain) {
+        if (lightningFlash > 0) lightningFlash = Math.max(0, lightningFlash - dt * 3.8);
+        else if (Math.random() < dt * 0.17) lightningFlash = 0.72;
+      } else {
+        lightningFlash = 0;
+      }
+
+      updateParticlesAndDebris(dt);
+
+      // Ambient Cryo Tank Farm Vapor
+      tankVaporTimer += dt;
+      if (tankVaporTimer > 0.28) {
+        tankVaporTimer = 0;
+        spawnParticle({
+          type: 'steam',
+          x: 136 + (Math.random() - 0.5) * 4,
+          y: 34,
+          vx: env.windX * 0.65,
+          vy: 2.2 + Math.random() * 1.4,
+          r: 2.5,
+          grow: 6,
+          life: 0,
+          maxLife: 2.5,
+          alpha: 0.22,
+          color: '235, 245, 255'
+        });
+      }
+
+      // Quick Disconnect (QD) Arm Cryo Boil-off Vapor
+      qdVaporTimer += dt;
+      if (qdVaporTimer > 0.34) {
+        qdVaporTimer = 0;
+        spawnParticle({
+          type: 'rcs',
+          x: TOWER_RIGHT_X + 4.5,
+          y: QD_ARM_Y,
+          vx: env.windX * 0.5 + 1.2,
+          vy: 1.4 + Math.random() * 0.8,
+          r: 1.2,
+          grow: 3.5,
+          life: 0,
+          maxLife: 1.4,
+          alpha: 0.22,
+          color: '225, 242, 255'
+        });
+      }
+
+      // Starship Header Tank Cryo Boil-off
+      if (gameState !== 'crashed' && ship.fuel > 500) {
+        shipCryoTimer += dt;
+        if (shipCryoTimer > 0.16) {
+          shipCryoTimer = 0;
+          const vPt = localToWorld(-ROCKET_RADIUS, 4.5 - getComOffset());
+          spawnParticle({
+            type: 'rcs',
+            x: vPt.x,
+            y: vPt.y,
+            vx: ship.vx * 0.5 + env.windX * 0.5 - 2.2,
+            vy: ship.vy * 0.5 + 1.2,
+            r: 0.85,
+            grow: 3.4,
+            life: 0,
+            maxLife: 0.55,
+            alpha: 0.22,
+            color: '232, 245, 255'
+          });
+        }
+      }
+
+      if (gameState === 'crashed') {
+        sound.updateContinuous(0, 0, 0, 0, false, false);
+        updateCamera(dt);
+        return;
+      }
+
+      const specs = getShipSpecs();
+
+      // --- Animate Chopsticks Jaws & Guidance Beacon ---
+      arms.sparkFlash = Math.max(0, arms.sparkFlash - dt * 2.8);
+      const jawSpeed = arms.caught ? 10.5 : 3.6;
+      arms.open += (arms.openTarget - arms.open) * (1 - Math.exp(-dt * jawSpeed));
+
+      if (!arms.caught && gameState === 'flying') {
+        const pinPos = getCatchPinWorld();
+        const distToCatch = Math.hypot(pinPos.x, pinPos.y - CATCH_Y);
+        arms.beaconActive = distToCatch < 210;
+        // Carriage subtly tracks elevation within ±2.5m when Starship enters final approach
+        const proximity = Math.max(0, 1 - distToCatch / 135);
+        const trackOffset = Math.max(-2.5, Math.min(2.5, (pinPos.y - CATCH_Y) * 0.10)) * proximity;
+        const desiredCarriageY = CATCH_Y + trackOffset;
+        arms.carriageY += (desiredCarriageY - arms.carriageY) * (1 - Math.exp(-dt * 2.4));
+      }
+
+      // --- Caught State: Hydraulic Shock Dip, Rebound & Suspended Sway ---
+      if (arms.caught) {
+        const springAcc = -specs.armSpringK * arms.dipY - specs.armDampC * arms.dipVy;
+        arms.dipVy += springAcc * dt;
+        arms.dipY += arms.dipVy * dt;
+        arms.dipY = Math.max(-7.0, Math.min(2.2, arms.dipY));
+
+        ship.throttleTarget = 0;
+        ship.throttleActual += (0 - ship.throttleActual) * (1 - Math.exp(-dt / 0.14));
+        if (ship.throttleActual < 0.005) ship.throttleActual = 0;
+        ship.gimbalAngle *= Math.exp(-dt * 6);
+        ship.rcsDir = 0;
+
+        const armWorldY = arms.carriageY + arms.dipY;
+        const pinLocalY = CATCH_PIN_LOCAL_Y - getComOffset();
+        const pendAcc = -3.9 * Math.sin(ship.angle) - 2.9 * ship.omega;
+        ship.omega += pendAcc * dt;
+        ship.angle += ship.omega * dt;
+
+        const sinA = Math.sin(ship.angle);
+        const cosA = Math.cos(ship.angle);
+        ship.x = arms.catchPinX - pinLocalY * sinA;
+        ship.y = armWorldY - pinLocalY * cosA;
+        ship.vx = 0;
+        ship.vy = arms.dipVy;
+        ship.groundEffect = 0;
+        ship.towerEffect = 0;
+
+        sound.updateContinuous(0, 0, 0, 0, false, true);
+        cam.shake *= Math.exp(-dt * 5.0);
+
+        settledTimer += dt;
+        if (settledTimer > 1.35 && Math.abs(arms.dipVy) < 0.35 && Math.abs(ship.omega) < 0.12) {
+          settledTimer = -999;
+          completeFlightAndPayout('caught');
+        }
+
+        updateCamera(dt);
+        return;
+      }
+
+      // --- Read Manual Controls (event.code + On-Screen Pointer) ---
+      const pressLeft = !!(keys['KeyA'] || keys['ArrowLeft'] || pointerCtrl.left);
+      const pressRight = !!(keys['KeyD'] || keys['ArrowRight'] || pointerCtrl.right);
+      const pressFire = !!(keys['KeyW'] || keys['ArrowUp'] || keys['Space'] || pointerCtrl.fire);
+      const pressCut = !!(keys['KeyS'] || keys['ArrowDown'] || pointerCtrl.cut);
+      const pressFineUp = !!(keys['ShiftLeft'] || keys['ShiftRight']);
+      const pressFineDown = !!(keys['ControlLeft'] || keys['ControlRight']);
+
+      // Manual Override cancels AI Autopilot immediately!
+      if (autoLand.enabled && (pressLeft || pressRight || pressFire || pressCut)) {
+        setAutoLand(false, '✋ สลับเป็นควบคุมเอง (Manual Override)');
+      }
+
+      let steerCmd = 0;
+
+      if (gameState === 'flying') {
+        if (autoLand.enabled) {
+          const curMass = ship.dryMass + ship.fuel;
+          const ai = computeAutoCatchCommands(specs, curMass);
+          steerCmd = ai.steer;
+          ship.throttleTarget = ai.throttle;
+          ship.throttleHold = ai.throttle;
+          ship.activeEngines = ai.engines;
+        } else {
+          if (pressLeft) steerCmd -= 1;
+          if (pressRight) steerCmd += 1;
+
+          if (pressCut) {
+            ship.throttleHold = 0;
+            ship.throttleTarget = 0;
+          } else if (pressFire) {
+            ship.throttleTarget = Math.min(1, ship.throttleTarget + 4.5 * dt);
+          } else {
+            if (pressFineUp) ship.throttleHold = Math.min(1, ship.throttleHold + 0.55 * dt);
+            if (pressFineDown) ship.throttleHold = Math.max(0, ship.throttleHold - 0.55 * dt);
+            if (ship.throttleTarget > ship.throttleHold) {
+              ship.throttleTarget = Math.max(ship.throttleHold, ship.throttleTarget - 4.8 * dt);
+            } else {
+              ship.throttleTarget = ship.throttleHold;
+            }
+          }
+
+          if (ship.engineMode === 'auto') {
+            const absAng = Math.abs(normalizeAngle(ship.angle));
+            if (absAng > 0.38 || ship.vy < -23) ship.activeEngines = 3;
+            else if (ship.vy < -9.5) ship.activeEngines = 2;
+            else ship.activeEngines = 1;
+          } else {
+            ship.activeEngines = ship.engineMode;
+          }
+        }
+      }
+
+      // --- 6-Substep Rigid Body Physics ---
+      const SUBSTEPS = 6;
+      const subDt = dt / SUBSTEPS;
+
+      let totalThrustN = 0;
+      let airSpeed = 0;
+      let aoaSin = 0;
+      let rcsFired = false;
+
+      for (let step = 0; step < SUBSTEPS; step++) {
+        // 1. Raptor Engine Spool Inertia
+        const targetThr = ship.fuel > 0 ? ship.throttleTarget : 0;
+        const tau = targetThr > ship.throttleActual ? specs.spoolTauUp : specs.spoolTauDown;
+        ship.throttleActual += (targetThr - ship.throttleActual) * (1 - Math.exp(-subDt / tau));
+        if (ship.throttleActual < 0.004 && targetThr === 0) ship.throttleActual = 0;
+
+        const mass = ship.dryMass + ship.fuel;
+        const inertia = mass * 168;
+        const comOff = getComOffset();
+
+        let fx = 0;
+        let fy = -mass * G;
+        let torque = 0;
+
+        // 2. Belly Flop Aerodynamics + Body Lift + Articulating Flaps
+        const rho = 1.225 * Math.exp(-Math.max(0, ship.y) / 8500);
+        const vRelX = ship.vx - env.windX;
+        const vRelY = ship.vy;
+        airSpeed = Math.hypot(vRelX, vRelY);
+
+        const c = Math.cos(ship.angle);
+        const s = Math.sin(ship.angle);
+        const vAxial = vRelX * s + vRelY * c;
+        const vNormal = vRelX * c - vRelY * s;
+        aoaSin = airSpeed > 1 ? Math.abs(vNormal) / airSpeed : 0;
+
+        const fAxial = -0.5 * rho * 0.52 * 64 * vAxial * Math.abs(vAxial);
+        const fNormal = -0.5 * rho * 1.18 * 445 * vNormal * Math.abs(vNormal);
+
+        fx += fAxial * s + fNormal * c;
+        fy += fAxial * c - fNormal * s;
+
+        // Heatshield incandescent glow at high Belly Flop speed
+        const heatTarget = Math.min(1, Math.max(0, (Math.abs(vNormal) - 26) / 36));
+        ship.aoaHeat += (heatTarget - ship.aoaHeat) * subDt * 3.8;
+
+        // Smooth SAS stabilization when manual tilt keys are released
+        let desiredSteer = steerCmd;
+        if (!autoLand.enabled && steerCmd === 0) {
+          const normAng = normalizeAngle(ship.angle);
+          desiredSteer = Math.max(-1, Math.min(1, -ship.omega * 2.5));
+          if (Math.abs(normAng) < 0.28 && ship.y < 340) {
+            torque += (-normAng * 4600000 - ship.omega * 5400000) * specs.aeroMult;
+          }
+        }
+
+        const targetFlapFwd = Math.max(0.08, Math.min(1.0, 0.52 - desiredSteer * 0.44));
+        const targetFlapAft = Math.max(0.08, Math.min(1.0, 0.52 + desiredSteer * 0.44));
+        ship.flapFwd += (targetFlapFwd - ship.flapFwd) * (1 - Math.exp(-subDt / 0.09));
+        ship.flapAft += (targetFlapAft - ship.flapAft) * (1 - Math.exp(-subDt / 0.09));
+
+        const qDynNormal = 0.5 * rho * vNormal * Math.abs(vNormal);
+        const aeroSteerTorque = desiredSteer * Math.abs(qDynNormal) * 20000 * specs.aeroMult;
+        const aeroRotDamp = -ship.omega * (1850000 + airSpeed * 195000);
+        torque += aeroSteerTorque + aeroRotDamp;
+
+        // 3. Raptor 3 Thrust & TVC Gimbal
+        if (ship.throttleActual > 0.005 && ship.fuel > 0) {
+          const effThr = 0.12 + ship.throttleActual * 0.88;
+          totalThrustN = ship.activeEngines * specs.raptorThrust * effThr;
+
+          const mdot = totalThrustN / (specs.isp * G);
+          ship.fuel = Math.max(0, ship.fuel - mdot * subDt);
+
+          const targetGimbal = desiredSteer * specs.maxGimbalRad;
+          ship.gimbalAngle += (targetGimbal - ship.gimbalAngle) * (1 - Math.exp(-subDt / 0.055));
+
+          const fThrustLocalX = -Math.sin(ship.gimbalAngle) * totalThrustN;
+          const fThrustLocalY = Math.cos(ship.gimbalAngle) * totalThrustN;
+
+          fx += fThrustLocalX * c + fThrustLocalY * s;
+          fy += -fThrustLocalX * s + fThrustLocalY * c;
+
+          const leverY = -23.0 - comOff;
+          torque += leverY * fThrustLocalX;
+        } else {
+          totalThrustN = 0;
+          ship.gimbalAngle += (0 - ship.gimbalAngle) * (1 - Math.exp(-subDt / 0.09));
+        }
+
+        // 4. Nose & Aft Cold-Gas RCS Thrusters
+        ship.rcsDir = 0;
+        if (Math.abs(steerCmd) > 0.08 || Math.abs(ship.omega) > 0.05) {
+          const rcsCmd = Math.abs(steerCmd) > 0.08 ? steerCmd : Math.max(-1, Math.min(1, -ship.omega * 2.5));
+          torque += rcsCmd * 5900000 * specs.aeroMult;
+          if (Math.abs(rcsCmd) > 0.14) {
+            ship.rcsDir = Math.sign(rcsCmd);
+            rcsFired = true;
+          }
+        }
+
+        // 5. Semi-Implicit Euler Integration
+        ship.vx += (fx / mass) * subDt;
+        ship.vy += (fy / mass) * subDt;
+        ship.omega += (torque / inertia) * subDt;
+        ship.x += ship.vx * subDt;
+        ship.y += ship.vy * subDt;
+        ship.angle += ship.omega * subDt;
+
+        // 6. Check Mechazilla Chopsticks Catch!
+        if (tryChopsticksCatch(specs)) {
+          return;
+        }
+
+        // 7. Check Mechazilla Tower Lattice Collision & Ground Crash (NO LANDING LEGS!)
+        const hullCheckPts = [
+          { lx: -ROCKET_RADIUS, ly: 20.0 - comOff },
+          { lx: -ROCKET_RADIUS, ly: 0.0 - comOff },
+          { lx: -ROCKET_RADIUS, ly: -23.0 - comOff },
+          { lx: ROCKET_RADIUS,  ly: -23.0 - comOff },
+          { lx: 0,              ly: 25.0 - comOff },
+          { lx: 0,              ly: NOZZLE_LOCAL_Y - comOff }
+        ];
+
+        for (let i = 0; i < hullCheckPts.length; i++) {
+          const wp = localToWorld(hullCheckPts[i].lx, hullCheckPts[i].ly);
+
+          // Tower structure collision
+          if (wp.x <= TOWER_RIGHT_X && wp.x >= TOWER_LEFT_X - 2 && wp.y <= TOWER_HEIGHT) {
+            const strikeSpd = Math.hypot(ship.vx, ship.vy);
+            if (strikeSpd > 4.0 || wp.x < TOWER_RIGHT_X - 1.5) {
+              spawnCatchSparks(TOWER_RIGHT_X, wp.y, 1.0);
+              triggerRUD('Starship พุ่งชนโครงเหล็กหอคอย Mechazilla!');
+              return;
+            } else {
+              // Very slow scrape off the tower bumpers with sparks
+              const push = (TOWER_RIGHT_X - wp.x) + 0.18;
+              ship.x += push;
+              ship.vx = Math.abs(ship.vx) * 0.45 + 1.2;
+              spawnCatchSparks(TOWER_RIGHT_X, wp.y, 0.35);
+            }
+          }
+
+          // Ground concrete pad collision — No landing legs means hitting the ground destroys the engines/hull!
+          const gY = getGroundY(wp.x);
+          if (wp.y <= gY) {
+            triggerRUD('พลาดแขนคีบ! Starship (ไม่มีขาตั้ง) ตกกระแทกพื้นคอนกรีตด้านล่าง!');
+            return;
+          }
+        }
+      }
+
+      // Proximity & Alignment Audio Beeps
+      const pinPos = getCatchPinWorld();
+      const altAboveArms = pinPos.y - (arms.carriageY + arms.dipY);
+      if (gameState === 'flying' && !autoLand.enabled) {
+        if (pinPos.x < -11.5 && ship.y < TOWER_HEIGHT + 25) {
+          sound.playProxBeep(true);
+        } else if (altAboveArms < 52 && altAboveArms > -8 && Math.abs(pinPos.x) < 16 && ship.vy < -14) {
+          sound.playProxBeep(true);
+        } else if (altAboveArms < 26 && altAboveArms > 0 && Math.abs(pinPos.x) < specs.catchHalfWidth) {
+          sound.playProxBeep(false);
+        }
+      }
+
+      // Ground & Tower Exhaust Impingement Calculation
+      const nozzlePos = localToWorld(0, NOZZLE_LOCAL_Y - getComOffset());
+      const plumeReach = 22 + ship.throttleActual * (42 + ship.activeEngines * 16);
+      const uprightDot = Math.cos(ship.angle + ship.gimbalAngle);
+      if (ship.throttleActual > 0.02 && uprightDot > 0.22 && nozzlePos.y < plumeReach) {
+        ship.groundEffect = Math.max(0, Math.min(1, (1 - nozzlePos.y / plumeReach) * ship.throttleActual * uprightDot));
+      } else {
+        ship.groundEffect = 0;
+      }
+
+      const distFromTower = nozzlePos.x - TOWER_RIGHT_X;
+      if (ship.throttleActual > 0.05 && distFromTower > 0 && distFromTower < 24 && nozzlePos.y < TOWER_HEIGHT + 12) {
+        ship.towerEffect = Math.max(0, Math.min(1, (1 - distFromTower / 24) * ship.throttleActual));
+      } else {
+        ship.towerEffect = 0;
+      }
+
+      spawnPlumeParticles();
+      if (rcsFired) spawnRcsParticles();
+
+      const thrustNorm = totalThrustN / (3 * specs.raptorThrust);
+      const engineShake = thrustNorm * (1.1 + ship.groundEffect * 3.8 + ship.towerEffect * 1.4);
+      cam.shake = Math.max(engineShake, cam.shake * Math.exp(-dt * 4.5));
+
+      sound.updateContinuous(thrustNorm, Math.max(ship.groundEffect, ship.towerEffect * 0.5), airSpeed, aoaSin, rcsFired, true);
+      updateCamera(dt);
+    }
+
+    function updateParticlesAndDebris(dt) {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.life += dt;
+        if (p.life >= p.maxLife) {
+          particles.splice(i, 1);
+          continue;
+        }
+        if (p.type === 'spark') {
+          p.vy -= G * 1.45 * dt;
+          p.vx *= 0.985;
+          if (p.y <= 0 && p.vy < 0) {
+            p.y = 0;
+            p.vy *= -0.42;
+            p.vx *= 0.74;
+          }
+        } else if (p.type === 'steam') {
+          p.vx += (env.windX * 0.42 - p.vx * 0.9) * dt;
+          p.vy += (2.8 - p.vy * 1.1) * dt;
+          if (p.y < 1.2) p.y = 1.2;
+        } else if (p.type === 'fire') {
+          p.vy += 8.5 * dt;
+          p.vx *= 0.96;
+        } else if (p.type === 'smoke') {
+          p.vy += 4.2 * dt;
+          p.vx += (env.windX * 0.35 - p.vx * 0.6) * dt;
+        }
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.r += p.grow * dt;
+      }
+
+      for (let i = shockwaves.length - 1; i >= 0; i--) {
+        const sw = shockwaves[i];
+        sw.life += dt;
+        if (sw.life >= sw.maxLife) shockwaves.splice(i, 1);
+        else {
+          const prog = sw.life / sw.maxLife;
+          sw.r = 5 + (sw.maxR - 5) * (1 - Math.pow(1 - prog, 3));
+        }
+      }
+
+      for (let i = 0; i < debris.length; i++) {
+        const d = debris[i];
+        d.life += dt;
+        d.vy -= G * dt;
+        d.x += d.vx * dt;
+        d.y += d.vy * dt;
+        d.angle += d.omega * dt;
+        const gY = getGroundY(d.x) + 1.2;
+        if (d.y < gY) {
+          d.y = gY;
+          d.vy *= -0.35;
+          d.vx *= 0.72;
+          d.omega *= 0.7;
+        }
+        if (d.burning && d.life < 4.5 && Math.random() < 0.32) {
+          spawnParticle({
+            type: Math.random() < 0.45 ? 'fire' : 'smoke',
+            x: d.x,
+            y: d.y,
+            vx: (Math.random() - 0.5) * 4,
+            vy: 3 + Math.random() * 5,
+            r: 1.6 + Math.random() * 1.8,
+            grow: 5,
+            life: 0,
+            maxLife: 0.45 + Math.random() * 0.45,
+            alpha: 0.72,
+            color: Math.random() < 0.45 ? '255, 130, 35' : '45, 48, 55'
+          });
+        }
+      }
+    }
+
+    function updateCamera(dt) {
+      const baseScale = Math.min(viewW, viewH) / 140;
+
+      if (cam.mode === 'tower') {
+        // Dedicated close-up Mechazilla Catch Zone Camera!
+        const targetScale = Math.max(3.6, Math.min(9.6, baseScale * 1.42));
+        const targetX = -5;
+        const targetY = CATCH_Y + 6;
+        cam.scale += (targetScale - cam.scale) * (1 - Math.exp(-dt * 4.0));
+        cam.x += (targetX - cam.x) * (1 - Math.exp(-dt * 4.5));
+        cam.y += (targetY - cam.y) * (1 - Math.exp(-dt * 4.5));
+      } else {
+        // Smart Follow Camera that zooms in and frames Mechazilla during final approach
+        const pinPos = getCatchPinWorld();
+        const distToCatch = Math.hypot(pinPos.x, pinPos.y - CATCH_Y);
+
+        let targetScale;
+        if (arms.caught) {
+          targetScale = baseScale * 1.48;
+        } else if (distToCatch < 135) {
+          targetScale = baseScale * (1.38 - (distToCatch / 135) * 0.48);
+        } else if (distToCatch < 480) {
+          targetScale = baseScale * (0.90 - ((distToCatch - 135) / 345) * 0.36);
+        } else {
+          targetScale = baseScale * 0.54;
+        }
+        targetScale = Math.max(2.1, Math.min(9.8, targetScale));
+        cam.scale += (targetScale - cam.scale) * (1 - Math.exp(-dt * 2.8));
+
+        const towerBlend = arms.caught ? 0.88 : Math.max(0, Math.min(0.68, 1 - distToCatch / 185));
+        const targetX = lerp(ship.x + ship.vx * 0.22, -6, towerBlend);
+        const minCamY = (viewH * 0.34) / cam.scale;
+        const targetY = Math.max(minCamY, lerp(ship.y + ship.vy * 0.10 - 4, CATCH_Y + 2, towerBlend * 0.85));
+
+        cam.x += (targetX - cam.x) * (1 - Math.exp(-dt * 5.2));
+        cam.y += (targetY - cam.y) * (1 - Math.exp(-dt * 5.2));
+      }
+
+      cam.shakeX = (Math.random() - 0.5) * 2 * cam.shake;
+      cam.shakeY = (Math.random() - 0.5) * 2 * cam.shake;
+    }
+
+    /* =========================================================================
+       9. ECONOMY PAYOUT, GRADING (S / A / B / C / RUD) & RECEIPT MODAL
+       ========================================================================= */
+    function completeFlightAndPayout(outcome, crashReason = '') {
+      const m = MISSIONS[currentMissionIdx];
+      const specs = getShipSpecs();
+      profile.totalFlights += 1;
+
+      const vy = catchStats.vy;
+      const offset = catchStats.offsetX;
+      const ang = catchStats.angleDeg;
+      const fuelFrac = ship.maxFuel > 0 ? ship.fuel / ship.maxFuel : 0;
+
+      let grade = 'RUD';
+      let title = 'จรวดระเบิด (RUD)!';
+      let subtitle = 'RAPID UNSCHEDULED DISASSEMBLY';
+      let comment = crashReason || 'แรงกระแทกเกินขีดจำกัดของโครงสร้าง Starship';
+      let badgeStyle = 'bg-red-950/90 border-red-500 text-red-300 text-xl';
+      const lines = [];
+      let totalEarned = 0;
+
+      if (outcome === 'rud') {
+        profile.streak = 0;
+        const insurance = Math.round((260 + currentMissionIdx * 75) * specs.cargoMult);
+        totalEarned = insurance;
+        lines.push({
+          label: `เงินประกันข้อมูล Telemetry${specs.cargoMult > 1 ? ` (×${specs.cargoMult.toFixed(2)})` : ''}`,
+          val: `+$${insurance.toLocaleString()}`,
+          cls: 'text-amber-300'
+        });
+      } else {
+        // Caught by Mechazilla Chopsticks!
+        profile.totalLandings += 1;
+        profile.streak += 1;
+        if (profile.streak > profile.bestStreak) profile.bestStreak = profile.streak;
+
+        if (vy <= 3.6 && offset <= 2.3 && ang <= 5.5) {
+          grade = 'S';
+          title = 'MECHAZILLA คีบสมบูรณ์แบบ!';
+          subtitle = 'STARBASE S-RANK CHOPSTICKS CATCH';
+          comment = 'หมุดคีบลงกลางรางเป๊ะ! โช้คไฮดรอลิกซับแรงนุ่มนวลไร้ที่ติ พร้อมเติมเชื้อเพลิงบินซ้ำทันที!';
+          badgeStyle = 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-[0_0_24px_rgba(251,191,36,0.5)] text-3xl';
+        } else if (vy <= 6.5 && offset <= 5.2 && ang <= 10.0) {
+          grade = 'A';
+          title = 'คีบจรวดสำเร็จอย่างสวยงาม!';
+          subtitle = 'MECHAZILLA CATCH CONFIRMED';
+          comment = 'แขนคีบหนีบหมุด Catch Pins ได้มั่นคงและปลอดภัย ได้รับโบนัสความแม่นยำเต็มอัตรา!';
+          badgeStyle = 'bg-emerald-500/20 border-emerald-400 text-emerald-300 text-3xl';
+        } else if (vy <= specs.maxSafeVy && ang <= specs.maxSafeTiltDeg) {
+          grade = 'B';
+          title = 'คีบกระแทกแรง — โช้ครับไว้ได้!';
+          subtitle = 'ROUGH CATCH — HYDRAULIC SHOCK ABSORBED';
+          comment = 'แขนคีบไฮดรอลิกซับแรงกระแทกได้ทัน! หักค่าบำรุงรักษาเล็กน้อยแต่ยังรับค่าจ้างก้อนโต!';
+          badgeStyle = 'bg-sky-500/20 border-sky-400 text-sky-300 text-3xl';
+        } else {
+          grade = 'C';
+          title = 'คีบเฉียดขีดจำกัด (Rough Catch)!';
+          subtitle = 'HEAVY IMPACT — REPAIR REQUIRED';
+          comment = 'โช้คไฮดรอลิกทำงานเต็มพิกัดจนช่วยชีวิตจรวดไว้ได้หวุดหวิด! หักค่าซ่อมหมุดคีบและรางรับ';
+          badgeStyle = 'bg-slate-800 border-slate-400 text-slate-200 text-3xl';
+        }
+
+        const basePay = Math.round(m.baseReward * specs.cargoMult);
+        lines.push({
+          label: `ค่าจ้างภารกิจคีบ${specs.cargoMult > 1 ? ` (×${specs.cargoMult.toFixed(2)})` : ''}`,
+          val: `+$${basePay.toLocaleString()}`,
+          cls: 'text-white'
+        });
+
+        let subtotal = basePay;
+
+        if (grade === 'S' || grade === 'A') {
+          const precBonus = offset <= 2.3 ? Math.round(m.baseReward * 0.38) : offset <= 5.2 ? Math.round(m.baseReward * 0.16) : 0;
+          if (precBonus > 0) {
+            subtotal += precBonus;
+            lines.push({
+              label: offset <= 2.3 ? 'โบนัสคีบกลางศูนย์แขนเป๊ะ (Bullseye!)' : 'โบนัสเข้าแนวแขนคีบแม่นยำ',
+              val: `+$${precBonus.toLocaleString()}`,
+              cls: 'text-amber-300'
+            });
+          }
+
+          const softBonus = vy <= 2.5 ? Math.round(m.baseReward * 0.26) : vy <= 4.8 ? Math.round(m.baseReward * 0.12) : 0;
+          if (softBonus > 0) {
+            subtotal += softBonus;
+            lines.push({ label: 'โบนัสคีบนุ่มนวลถนอมโช้ค', val: `+$${softBonus.toLocaleString()}`, cls: 'text-emerald-300' });
+          }
+        }
+
+        if (fuelFrac > 0.10) {
+          const fuelBonus = Math.round(m.baseReward * 0.18 * fuelFrac);
+          if (fuelBonus > 0) {
+            subtotal += fuelBonus;
+            lines.push({ label: `โบนัสประหยัดเชื้อเพลิง (${Math.round(fuelFrac * 100)}%)`, val: `+$${fuelBonus.toLocaleString()}`, cls: 'text-cyan-300' });
+          }
+        }
+
+        if (grade === 'B' || grade === 'C') {
+          const severity = grade === 'C' ? 0.34 : Math.min(0.24, 0.10 + Math.max(0, vy - 5.5) * 0.035);
+          const rawRepair = Math.round(m.baseReward * severity);
+          const repair = Math.round(rawRepair * (1 - specs.repairDiscount));
+          if (repair > 0) {
+            subtotal = Math.max(250, subtotal - repair);
+            lines.push({ label: 'หักค่าซ่อมโช้คไฮดรอลิก/หมุดคีบ', val: `-$${repair.toLocaleString()}`, cls: 'text-red-300' });
+          }
+        }
+
+        const mult = getStreakMultiplier(profile.streak);
+        totalEarned = Math.round(subtotal * mult);
+        if (mult > 1.0) {
+          lines.push({ label: `ตัวคูณ Streak ต่อเนื่อง (${profile.streak} รอบ)`, val: `×${mult.toFixed(2)}`, cls: 'text-amber-300 font-bold' });
+        }
+
+        sound.playCashChime(grade === 'S');
+      }
+
+      profile.cash += totalEarned;
+      checkAutoMissionUnlocks();
+      saveProfile();
+      updateTopBarUI();
+
+      // Populate Receipt Modal
+      document.getElementById('resSubtitle').textContent = subtitle;
+      document.getElementById('resSubtitle').className = `text-[11px] tracking-widest uppercase font-semibold ${outcome !== 'rud' ? 'text-emerald-400' : 'text-red-400'}`;
+      document.getElementById('resTitle').textContent = title;
+      const badge = document.getElementById('resGradeBadge');
+      badge.textContent = grade;
+      badge.className = `w-16 h-16 rounded-2xl flex items-center justify-center font-extrabold mono shadow-lg border-2 ${badgeStyle}`;
+
+      document.getElementById('resVy').textContent = `${vy.toFixed(1)} ม/วิ`;
+      document.getElementById('resOffset').textContent = `${offset.toFixed(1)} ม.`;
+      document.getElementById('resAngle').textContent = `${ang.toFixed(1)}°`;
+      document.getElementById('resComment').textContent = comment;
+
+      document.getElementById('receiptLines').innerHTML = lines.map((ln) => `
+        <div class="flex items-center justify-between">
+          <span class="text-slate-300">${ln.label}</span>
+          <span class="mono font-semibold ${ln.cls}">${ln.val}</span>
+        </div>
+      `).join('');
+
+      document.getElementById('resNewBalance').textContent = `ยอดคงเหลือใหม่: $${profile.cash.toLocaleString()}`;
+
+      const totalEl = document.getElementById('resTotalEarned');
+      const startTs = performance.now();
+      function animCash(now) {
+        const p = Math.min(1, (now - startTs) / 680);
+        const eased = 1 - Math.pow(1 - p, 3);
+        totalEl.textContent = `+$${Math.round(totalEarned * eased).toLocaleString()}`;
+        if (p < 1) requestAnimationFrame(animCash);
+      }
+      requestAnimationFrame(animCash);
+
+      document.getElementById('resultModal').classList.remove('hidden');
+    }
+
+    /* =========================================================================
+       10. 2.5D LAYERED ULTRA-DETAILED PROCEDURAL RENDERER
+       ========================================================================= */
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, viewW, viewH);
+
+      // 1. Dynamic Sky, Stars & Distant Clouds
+      drawThemedSky();
+      drawParallaxClouds(0);
+      drawDistantTankFarm();
+      drawParallaxClouds(1);
+
+      // 2. Concrete Pad, Water-Cooled Flame Trench & Upward Spotlights
+      drawGroundAndFlameTrench();
+
+      // 3. MECHAZILLA TOWER, QD ARM & REAR CHOPSTICK ARM (BEHIND STARSHIP!)
+      drawMechazillaTower();
+      drawChopstickArm('back');
+      drawCatchZoneGuide();
+
+      // 4. Background Particles (Steam / Smoke)
+      drawParticlesLayer('behind');
+
+      // 5. STARSHIP (DESCENDING RIGHT BETWEEN THE TWO ARMS — NO LANDING LEGS!)
+      if (gameState !== 'crashed') {
+        drawRaptorPlumeAndGlow();
+        drawStarshipModel();
+        drawAeroAirflowEffects();
+      } else {
+        drawDebris();
+      }
+
+      // 6. FRONT CHOPSTICK ARM (IN FRONT OF STARSHIP FOR TRUE 2.5D CLAMPING!)
+      drawChopstickArm('front');
+
+      // 7. Foreground Sparks, Fire, RCS, Shockwaves, Front Clouds & Storm Rain
+      drawParticlesLayer('front');
+      drawShockwaves();
+      drawParallaxClouds(2);
+      if (env.rain) drawStormRain();
+    }
+
+    function drawThemedSky() {
+      const altT = Math.max(0, Math.min(1, cam.y / 900));
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, viewH);
+
+      const palettes = {
+        daylight: {
+          top: [18, 52, 108], mid: [66, 128, 192], bot: [185, 212, 232],
+          highTop: [4, 10, 28], highMid: [14, 38, 82], highBot: [52, 92, 148],
+          sunColor: 'rgba(255, 250, 224, 0.38)', starBase: 0
+        },
+        golden: {
+          top: [26, 40, 86], mid: [130, 88, 118], bot: [242, 152, 94],
+          highTop: [6, 12, 32], highMid: [38, 42, 82], highBot: [148, 92, 92],
+          sunColor: 'rgba(255, 212, 138, 0.45)', starBase: 0.18
+        },
+        highalt: {
+          top: [12, 32, 74], mid: [44, 86, 146], bot: [152, 184, 214],
+          highTop: [2, 5, 16], highMid: [10, 22, 56], highBot: [32, 62, 114],
+          sunColor: 'rgba(255, 245, 220, 0.32)', starBase: 0.25
+        },
+        night: {
+          top: [3, 6, 16], mid: [8, 16, 36], bot: [18, 32, 58],
+          highTop: [1, 3, 9], highMid: [4, 10, 24], highBot: [10, 20, 42],
+          sunColor: 'rgba(180, 215, 255, 0.10)', starBase: 0.92
+        },
+        nightstorm: {
+          top: [7, 11, 22], mid: [16, 24, 40], bot: [28, 38, 54],
+          highTop: [3, 6, 14], highMid: [10, 16, 30], highBot: [20, 28, 44],
+          sunColor: 'rgba(148, 163, 184, 0.06)', starBase: 0.25
+        },
+        orbital: {
+          top: [10, 22, 56], mid: [52, 68, 118], bot: [195, 132, 98],
+          highTop: [2, 4, 12], highMid: [8, 16, 44], highBot: [36, 48, 92],
+          sunColor: 'rgba(255, 225, 165, 0.36)', starBase: 0.48
+        }
+      };
+
+      const p = palettes[env.theme] || palettes.daylight;
+      const mix = (c1, c2) => `rgb(${Math.round(lerp(c1[0], c2[0], altT))},${Math.round(lerp(c1[1], c2[1], altT))},${Math.round(lerp(c1[2], c2[2], altT))})`;
+
+      skyGrad.addColorStop(0, mix(p.top, p.highTop));
+      skyGrad.addColorStop(0.58, mix(p.mid, p.highMid));
+      skyGrad.addColorStop(1, mix(p.bot, p.highBot));
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, viewW, viewH);
+
+      const sunX = viewW * 0.82 - cam.x * 0.02;
+      const sunY = viewH * 0.20 + cam.y * 0.025;
+      const sunGrad = ctx.createRadialGradient(sunX, sunY, 8, sunX, sunY, viewW * 0.34);
+      sunGrad.addColorStop(0, p.sunColor);
+      sunGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = sunGrad;
+      ctx.fillRect(0, 0, viewW, viewH);
+
+      const starAlpha = Math.max(p.starBase, altT > 0.25 ? (altT - 0.25) / 0.75 : 0);
+      if (starAlpha > 0.02) {
+        ctx.save();
+        for (let i = 0; i < stars.length; i++) {
+          const st = stars[i];
+          const tw = 0.55 + 0.45 * Math.sin(simTime * 2.2 + st.twinkle);
+          ctx.fillStyle = `rgba(228, 240, 255, ${starAlpha * tw * 0.9})`;
+          ctx.beginPath();
+          ctx.arc(st.x * viewW, st.y * viewH, st.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      if (lightningFlash > 0.02) {
+        ctx.fillStyle = `rgba(210, 232, 255, ${lightningFlash * 0.28})`;
+        ctx.fillRect(0, 0, viewW, viewH);
+      }
+    }
+
+    function drawParallaxClouds(layerFilter) {
+      ctx.save();
+      const isDark = env.theme === 'night' || env.theme === 'nightstorm';
+      const isGolden = env.theme === 'golden' || env.theme === 'orbital';
+
+      for (let i = 0; i < clouds.length; i++) {
+        const cl = clouds[i];
+        if (cl.layer !== layerFilter) continue;
+
+        const driftX = cl.x + simTime * env.windBase * cl.parallax * 1.4;
+        const sx = viewW * 0.5 + (driftX - cam.x * cl.parallax) * (cam.scale * (0.45 + cl.parallax * 0.45));
+        const sy = viewH * 0.54 - (cl.y - cam.y * (0.45 + cl.parallax * 0.5)) * (cam.scale * 0.65);
+
+        if (sx < -420 || sx > viewW + 420 || sy < -220 || sy > viewH + 220) continue;
+
+        const cw = cl.w * cam.scale * 0.48;
+        const ch = cl.h * cam.scale * 0.48;
+        const grad = ctx.createLinearGradient(sx, sy - ch, sx, sy + ch);
+
+        if (isDark) {
+          grad.addColorStop(0, `rgba(72, 86, 112, ${cl.alpha * 1.15})`);
+          grad.addColorStop(1, `rgba(22, 30, 46, ${cl.alpha * 0.7})`);
+        } else if (isGolden) {
+          grad.addColorStop(0, `rgba(255, 224, 188, ${cl.alpha * 1.1})`);
+          grad.addColorStop(1, `rgba(170, 120, 145, ${cl.alpha * 0.5})`);
+        } else {
+          grad.addColorStop(0, `rgba(255, 252, 248, ${cl.alpha * 1.15})`);
+          grad.addColorStop(1, `rgba(175, 200, 228, ${cl.alpha * 0.5})`);
+        }
+
+        ctx.fillStyle = grad;
+        for (let j = 0; j < cl.puffs.length; j++) {
+          const pf = cl.puffs[j];
+          ctx.beginPath();
+          ctx.ellipse(sx + pf.ox * cw, sy + pf.oy * ch, cw * pf.sr, ch * (0.65 + pf.sr * 0.5), 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+    }
+
+    function drawDistantTankFarm() {
+      const groundScreen = worldToScreen(0, -0.7);
+      if (groundScreen.y > viewH + 260) return;
+
+      ctx.save();
+      const isNight = env.theme === 'night' || env.theme === 'nightstorm';
+      const horizonY = groundScreen.y - 3.2 * cam.scale;
+      const seaGrad = ctx.createLinearGradient(0, horizonY - 14, 0, groundScreen.y + 4);
+      seaGrad.addColorStop(0, isNight ? 'rgba(10, 22, 42, 0.86)' : 'rgba(28, 64, 106, 0.72)');
+      seaGrad.addColorStop(1, isNight ? 'rgba(12, 18, 28, 0.96)' : 'rgba(34, 52, 68, 0.92)');
+      ctx.fillStyle = seaGrad;
+      ctx.fillRect(0, horizonY, viewW, groundScreen.y - horizonY + 8);
+
+      // Boca Chica White Cryogenic Tank Farm (x = +108m .. +178m)
+      [108, 122, 136, 154, 174].forEach((wx, idx) => {
+        const bp = worldToScreen(wx, -0.7);
+        if (bp.x < -80 || bp.x > viewW + 80) return;
+        const s = cam.scale * 0.84;
+        const tw = (idx >= 3 ? 11.5 : 7.8) * s;
+        const th = (idx >= 3 ? 28 : 34) * s;
+
+        const tGrad = ctx.createLinearGradient(bp.x - tw * 0.5, bp.y, bp.x + tw * 0.5, bp.y);
+        if (isNight) {
+          tGrad.addColorStop(0, '#475569');
+          tGrad.addColorStop(0.4, '#cbd5e1');
+          tGrad.addColorStop(1, '#1e293b');
+        } else {
+          tGrad.addColorStop(0, '#cbd5e1');
+          tGrad.addColorStop(0.4, '#ffffff');
+          tGrad.addColorStop(1, '#64748b');
+        }
+
+        ctx.fillStyle = tGrad;
+        ctx.beginPath();
+        ctx.roundRect(bp.x - tw * 0.5, bp.y - th, tw, th, [tw * 0.5, tw * 0.5, 0, 0]);
+        ctx.fill();
+      });
+
+      ctx.restore();
+    }
+
+    function drawGroundAndFlameTrench() {
+      const groundLevel = worldToScreen(0, -0.7).y;
+      if (groundLevel > viewH + 220) return;
+
+      const pLeft = worldToScreen(-APRON_HALF_W, 0);
+      const pRight = worldToScreen(APRON_HALF_W, 0);
+      const s = cam.scale;
+      const isNight = env.theme === 'night' || env.theme === 'nightstorm';
+
+      ctx.save();
+
+      // Ground Upward Searchlight Beams (Boca Chica Starbase atmosphere)
+      const beamAlpha = isNight ? 0.24 : 0.08;
+      [-52, 40].forEach((bx, idx) => {
+        const lp = worldToScreen(bx, 0);
+        const tilt = idx === 0 ? 18 : -22;
+        const beamH = 165 * s;
+        const cone = ctx.createLinearGradient(lp.x, lp.y, lp.x + tilt * s, lp.y - beamH);
+        cone.addColorStop(0, `rgba(224, 242, 254, ${beamAlpha})`);
+        cone.addColorStop(1, 'rgba(224, 242, 254, 0)');
+        ctx.fillStyle = cone;
+        ctx.beginPath();
+        ctx.moveTo(lp.x - 1.2 * s, lp.y);
+        ctx.lineTo(lp.x + (tilt - 14) * s, lp.y - beamH);
+        ctx.lineTo(lp.x + (tilt + 14) * s, lp.y - beamH);
+        ctx.lineTo(lp.x + 1.2 * s, lp.y);
+        ctx.closePath();
+        ctx.fill();
+      });
+
+      // Boca Chica Coastal Soil
+      const earthGrad = ctx.createLinearGradient(0, groundLevel, 0, viewH + 60);
+      earthGrad.addColorStop(0, isNight ? '#1c212a' : '#4a453d');
+      earthGrad.addColorStop(0.22, isNight ? '#12161d' : '#2c2925');
+      earthGrad.addColorStop(1, '#0b0d12');
+      ctx.fillStyle = earthGrad;
+      ctx.fillRect(0, groundLevel, viewW, viewH - groundLevel + 80);
+
+      // Stage 0 Reinforced Concrete Pad
+      const padW = pRight.x - pLeft.x;
+      const padH = Math.max(4, 3.0 * s);
+      const padGrad = ctx.createLinearGradient(pLeft.x, pLeft.y, pRight.x, pLeft.y);
+      padGrad.addColorStop(0, isNight ? '#2b3340' : '#4b5563');
+      padGrad.addColorStop(0.35, isNight ? '#475262' : '#7b8794');
+      padGrad.addColorStop(0.65, isNight ? '#3c4554' : '#64707d');
+      padGrad.addColorStop(1, isNight ? '#2b3340' : '#4b5563');
+      ctx.fillStyle = padGrad;
+      ctx.fillRect(pLeft.x, pLeft.y, padW, padH);
+
+      // Water-Cooled Steel Flame Trench & Exhaust Deflector directly under Catch Zone (x = -14 to +16)
+      const defL = worldToScreen(-14, 0.45);
+      const defR = worldToScreen(16, 0.45);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(defL.x, defL.y, defR.x - defL.x, Math.max(4, 2.6 * s));
+      // Angled deflector louvers & deluge plate sheen
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(defL.x + 1.5 * s, defL.y + 0.5 * s, (defR.x - defL.x) - 3 * s, Math.max(2, 1.3 * s));
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.35)';
+      ctx.fillRect(defL.x + 2 * s, defL.y + 0.2 * s, (defR.x - defL.x) - 4 * s, Math.max(1.2, 0.4 * s));
+
+      // Caution Yellow Border around Flame Trench
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(defL.x - 1.5 * s, defL.y, 1.5 * s, Math.max(2, 0.9 * s));
+      ctx.fillRect(defR.x, defL.y, 1.5 * s, Math.max(2, 0.9 * s));
+
+      // Dynamic Raptor Exhaust Illumination on Concrete Flame Trench
+      if (ship.groundEffect > 0.02 && gameState !== 'crashed') {
+        const hitScr = worldToScreen(ship.x, 0);
+        const glowR = (34 + ship.activeEngines * 16) * s;
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        const gGlow = ctx.createRadialGradient(hitScr.x, pLeft.y + 2, 2, hitScr.x, pLeft.y + 2, glowR);
+        gGlow.addColorStop(0, `rgba(220, 240, 255, ${0.88 * ship.groundEffect})`);
+        gGlow.addColorStop(0.28, `rgba(120, 175, 255, ${0.55 * ship.groundEffect})`);
+        gGlow.addColorStop(0.65, `rgba(255, 140, 55, ${0.28 * ship.groundEffect})`);
+        gGlow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = gGlow;
+        ctx.beginPath();
+        ctx.ellipse(hitScr.x, pLeft.y + 2, glowR, glowR * 0.36, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Live Animated Starbase Windsock Pole (x = +48m)
+      const wsBase = worldToScreen(48, 0);
+      const poleH = 15 * s;
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = Math.max(1.5, 0.45 * s);
+      ctx.beginPath();
+      ctx.moveTo(wsBase.x, wsBase.y);
+      ctx.lineTo(wsBase.x, wsBase.y - poleH);
+      ctx.stroke();
+
+      const windMag = Math.abs(env.windX);
+      const windDir = env.windX >= 0 ? 1 : -1;
+      const lift = Math.min(1, windMag / 10);
+      const sockLen = 6.5 * s;
+      let prevX = wsBase.x;
+      let prevY = wsBase.y - poleH;
+      for (let seg = 0; seg < 5; seg++) {
+        const t0 = seg / 5;
+        const t1 = (seg + 1) / 5;
+        const flutter = Math.sin(env.windsockPhase - seg * 1.1) * (0.25 + lift * 0.48) * s;
+        const droop = (1 - lift) * 1.15 * (t1 * sockLen);
+        const nx = wsBase.x + windDir * t1 * sockLen * (0.28 + 0.72 * lift);
+        const ny = wsBase.y - poleH + droop + flutter;
+        const r0 = (1.15 - t0 * 0.55) * s;
+        const r1 = (1.15 - t1 * 0.55) * s;
+        ctx.fillStyle = seg % 2 === 0 ? '#f97316' : '#f8fafc';
+        ctx.beginPath();
+        ctx.moveTo(prevX, prevY - r0);
+        ctx.lineTo(nx, ny - r1);
+        ctx.lineTo(nx, ny + r1);
+        ctx.lineTo(prevX, prevY + r0);
+        ctx.closePath();
+        ctx.fill();
+        prevX = nx;
+        prevY = ny;
+      }
+
+      ctx.restore();
+    }
+
+    function drawMechazillaTower() {
+      const botLeft = worldToScreen(TOWER_LEFT_X, 0);
+      const topRight = worldToScreen(TOWER_RIGHT_X, TOWER_HEIGHT);
+      if (botLeft.x > viewW + 220 || topRight.x < -220) return;
+
+      const s = cam.scale;
+      const txL = botLeft.x;
+      const txR = topRight.x;
+      const tw = txR - txL;
+      const tyBot = botLeft.y;
+      const tyTop = topRight.y;
+      const th = tyBot - tyTop;
+      const isNight = env.theme === 'night' || env.theme === 'nightstorm';
+
+      ctx.save();
+
+      // Heavy Concrete Tower Pedestal Base
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(txL - 2.4 * s, tyBot - 8 * s, tw + 4.8 * s, 8 * s);
+
+      // Subtle translucent lattice interior depth
+      ctx.fillStyle = isNight ? 'rgba(15, 23, 42, 0.58)' : 'rgba(30, 41, 59, 0.28)';
+      ctx.fillRect(txL, tyTop, tw, th);
+
+      // 11 Steel Lattice Truss Modules (Diagonal Cross-Bracing)
+      const segs = 11;
+      const segH = th / segs;
+      ctx.strokeStyle = isNight ? '#475569' : '#334155';
+      ctx.lineWidth = Math.max(1.2, 0.62 * s);
+      ctx.beginPath();
+      for (let i = 0; i < segs; i++) {
+        const y0 = tyBot - i * segH;
+        const y1 = y0 - segH;
+        ctx.moveTo(txL, y0);
+        ctx.lineTo(txR, y1);
+        ctx.moveTo(txR, y0);
+        ctx.lineTo(txL, y1);
+        ctx.moveTo(txL, y1);
+        ctx.lineTo(txR, y1);
+      }
+      ctx.stroke();
+
+      // Main Heavy Vertical Steel Columns
+      const colGrad = ctx.createLinearGradient(txL, 0, txR, 0);
+      colGrad.addColorStop(0, '#1e293b');
+      colGrad.addColorStop(0.25, '#64748b');
+      colGrad.addColorStop(0.5, '#334155');
+      colGrad.addColorStop(0.85, '#94a3b8');
+      colGrad.addColorStop(1, '#1e293b');
+      ctx.fillStyle = colGrad;
+      const colW = Math.max(2.2, 1.5 * s);
+      ctx.fillRect(txL - colW * 0.4, tyTop, colW, th);
+      ctx.fillRect(txR - colW * 0.6, tyTop, colW, th);
+      ctx.fillRect(txL + tw * 0.48, tyTop, colW * 0.6, th);
+
+      // Stainless Steel Vertical Carriage Guide Rail on Right Side (for Chopsticks!)
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(txR - 0.25 * s, tyTop + 5 * s, Math.max(1.8, 0.9 * s), th - 12 * s);
+
+      // Quick Disconnect (QD) Arm (Retracted cleanly at y = 74m so Starship clears it)
+      const qdBase = worldToScreen(TOWER_RIGHT_X, QD_ARM_Y);
+      ctx.save();
+      ctx.translate(qdBase.x, qdBase.y);
+      ctx.rotate(-0.22); // Angled safely up/back in catch configuration
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(0, -1.3 * s, 6.2 * s, 2.6 * s);
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = Math.max(1, 0.25 * s);
+      ctx.strokeRect(0, -1.3 * s, 6.2 * s, 2.6 * s);
+      // Umbilical quick-disconnect hood
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(5.2 * s, -1.7 * s, 1.6 * s, 3.4 * s);
+      ctx.restore();
+
+      // Tower Crown Platform & Tall Steel Lightning Mast
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(txL - 1.2 * s, tyTop - 1.6 * s, tw + 2.4 * s, 2.2 * s);
+
+      const midX = (txL + txR) * 0.5;
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = Math.max(1.5, 0.55 * s);
+      ctx.beginPath();
+      ctx.moveTo(midX, tyTop - 1.6 * s);
+      ctx.lineTo(midX, tyTop - 14 * s);
+      ctx.stroke();
+
+      // Blinking Red Aviation Warning Lights on Crown & Lightning Rod
+      const blinkOn = Math.sin(simTime * 4.4) > -0.15;
+      if (blinkOn) {
+        ctx.fillStyle = '#ef4444';
+        ctx.shadowColor = '#ef4444';
+        ctx.shadowBlur = 16;
+        ctx.beginPath();
+        ctx.arc(midX, tyTop - 14 * s, Math.max(2.6, 1.15 * s), 0, Math.PI * 2);
+        ctx.arc(txL, tyTop - 1 * s, Math.max(2.0, 0.85 * s), 0, Math.PI * 2);
+        ctx.arc(txR, tyTop - 1 * s, Math.max(2.0, 0.85 * s), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      // Tower Floodlights Tracking Starship into the Catch Zone
+      const beamAlpha = isNight ? 0.34 : 0.11;
+      [96, 46].forEach((ly) => {
+        const lp = worldToScreen(TOWER_RIGHT_X, ly);
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(lp.x - 0.5 * s, lp.y - 1.1 * s, 2.0 * s, 2.2 * s);
+
+        const targetX = gameState !== 'crashed' ? Math.max(-5, Math.min(48, ship.x)) : 0;
+        const targetY = gameState !== 'crashed' ? Math.max(18, Math.min(115, ship.y)) : CATCH_Y;
+        const tp = worldToScreen(targetX, targetY);
+
+        const cone = ctx.createLinearGradient(lp.x, lp.y, tp.x, tp.y);
+        cone.addColorStop(0, `rgba(224, 242, 254, ${beamAlpha})`);
+        cone.addColorStop(1, 'rgba(224, 242, 254, 0)');
+        ctx.fillStyle = cone;
+        ctx.beginPath();
+        ctx.moveTo(lp.x, lp.y);
+        ctx.lineTo(tp.x + 12 * s, tp.y - 16 * s);
+        ctx.lineTo(tp.x + 12 * s, tp.y + 16 * s);
+        ctx.closePath();
+        ctx.fill();
+      });
+
+      ctx.restore();
+    }
+
+    function drawCatchZoneGuide() {
+      if (arms.caught || gameState !== 'flying') return;
+
+      const specs = getShipSpecs();
+      const armWorldY = arms.carriageY + arms.dipY;
+      const leftScr = worldToScreen(-specs.catchHalfWidth, armWorldY);
+      const rightScr = worldToScreen(specs.catchHalfWidth, armWorldY);
+      const centerScr = worldToScreen(0, armWorldY);
+      const s = cam.scale;
+
+      const pinPos = getCatchPinWorld();
+      const alignedX = Math.abs(pinPos.x) <= specs.catchHalfWidth;
+      const closeY = Math.abs(pinPos.y - armWorldY) < 42;
+      const pulse = 0.62 + 0.38 * Math.sin(simTime * 5.6);
+
+      ctx.save();
+
+      // Vertical alignment laser corridor when Starship approaches
+      if (arms.beaconActive) {
+        const corridorH = 55 * s;
+        const corrGrad = ctx.createLinearGradient(0, centerScr.y, 0, centerScr.y - corridorH);
+        const col = alignedX ? '52, 211, 153' : '56, 189, 248';
+        corrGrad.addColorStop(0, `rgba(${col}, ${0.22 * pulse})`);
+        corrGrad.addColorStop(1, `rgba(${col}, 0)`);
+        ctx.fillStyle = corrGrad;
+        ctx.fillRect(leftScr.x, centerScr.y - corridorH, rightScr.x - leftScr.x, corridorH);
+      }
+
+      // Glowing horizontal laser guide line between Chopsticks
+      ctx.strokeStyle = alignedX && closeY
+        ? `rgba(52, 211, 153, ${0.92 * pulse})`
+        : `rgba(56, 189, 248, ${0.68 * pulse})`;
+      ctx.lineWidth = Math.max(1.8, 0.55 * s);
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.moveTo(leftScr.x, leftScr.y);
+      ctx.lineTo(rightScr.x, rightScr.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Target Center Crosshair Diamond
+      ctx.fillStyle = alignedX && closeY ? '#34d399' : '#38bdf8';
+      ctx.shadowColor = alignedX && closeY ? '#34d399' : '#38bdf8';
+      ctx.shadowBlur = 12;
+      const d = Math.max(4, 1.35 * s);
+      ctx.beginPath();
+      ctx.moveTo(centerScr.x, centerScr.y - d);
+      ctx.lineTo(centerScr.x + d, centerScr.y);
+      ctx.lineTo(centerScr.x, centerScr.y + d);
+      ctx.lineTo(centerScr.x - d, centerScr.y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      if (s > 3.0) {
+        ctx.font = `700 ${Math.max(9, Math.min(13, 2.2 * s))}px "JetBrains Mono", monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = alignedX && closeY ? 'rgba(167, 243, 208, 0.96)' : 'rgba(186, 230, 253, 0.88)';
+        ctx.fillText(alignedX && closeY ? '▼ CATCH LOCK READY ▼' : 'MECHAZILLA CATCH ZONE', centerScr.x, centerScr.y - 3.6 * s);
+      }
+
+      ctx.restore();
+    }
+
+    function drawChopstickArm(layer) {
+      // 2.5D Layered Chopsticks: 'back' drawn behind Starship, 'front' drawn in front!
+      const s = cam.scale;
+      const armWorldY = arms.carriageY + arms.dipY;
+      const specs = getShipSpecs();
+      const armTipX = Math.max(12.5, specs.catchHalfWidth + 4.2);
+
+      const baseScr = worldToScreen(TOWER_RIGHT_X, armWorldY);
+      const tipScr = worldToScreen(armTipX, armWorldY);
+      if (tipScr.x < -120 || baseScr.x > viewW + 200) return;
+
+      const armLen = tipScr.x - baseScr.x;
+      const openFrac = arms.open; // 1 = open wide, 0 = clamped tight
+
+      const perspShiftY = layer === 'back' ? (-3.2 * openFrac - 0.8) * s : (2.9 * openFrac + 0.6) * s;
+      const armAngle = layer === 'back' ? (-0.072 * openFrac) : (0.062 * openFrac);
+      const armThickness = (layer === 'back' ? 3.2 : 3.7) * s;
+
+      ctx.save();
+
+      // Vertical Sliding Carriage Assembly & Hydraulic Cylinders on Tower Rail
+      if (layer === 'back') {
+        const carL = worldToScreen(TOWER_LEFT_X - 1.2, armWorldY + 8.5);
+        const carR = worldToScreen(TOWER_RIGHT_X + 1.5, armWorldY - 8.5);
+        ctx.fillStyle = '#1e293b';
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = Math.max(1.2, 0.35 * s);
+        ctx.beginPath();
+        ctx.roundRect(carL.x, carL.y, carR.x - carL.x, carR.y - carL.y, 2 * s);
+        ctx.fill();
+        ctx.stroke();
+
+        // Twin Vertical Hydraulic Shock Cylinders inside Carriage
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(carR.x - 2.6 * s, carL.y + 1.4 * s, 1.5 * s, (carR.y - carL.y) - 2.8 * s);
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(carR.x - 2.15 * s, carL.y + 0.4 * s, 0.6 * s, (carR.y - carL.y) - 0.8 * s);
+      }
+
+      ctx.translate(baseScr.x, baseScr.y + perspShiftY);
+      ctx.rotate(armAngle);
+
+      // Tapered Heavy Steel Chopstick Beam
+      const beamGrad = ctx.createLinearGradient(0, -armThickness, 0, armThickness);
+      if (layer === 'back') {
+        beamGrad.addColorStop(0, '#334155');
+        beamGrad.addColorStop(0.5, '#1e293b');
+        beamGrad.addColorStop(1, '#0f172a');
+      } else {
+        beamGrad.addColorStop(0, '#94a3b8');
+        beamGrad.addColorStop(0.32, '#64748b');
+        beamGrad.addColorStop(0.75, '#334155');
+        beamGrad.addColorStop(1, '#1e293b');
+      }
+
+      ctx.fillStyle = beamGrad;
+      ctx.beginPath();
+      ctx.moveTo(0, -armThickness * 0.95);
+      ctx.lineTo(armLen, -armThickness * 0.42);
+      ctx.lineTo(armLen, armThickness * 0.48);
+      ctx.lineTo(0, armThickness * 1.05);
+      ctx.closePath();
+      ctx.fill();
+
+      // Internal Lattice Cross-Bracing along Chopstick
+      ctx.strokeStyle = layer === 'back' ? 'rgba(100, 116, 139, 0.45)' : 'rgba(226, 232, 240, 0.55)';
+      ctx.lineWidth = Math.max(0.9, 0.25 * s);
+      const bays = 7;
+      ctx.beginPath();
+      for (let b = 0; b < bays; b++) {
+        const x0 = (b / bays) * armLen;
+        const x1 = ((b + 1) / bays) * armLen;
+        const h0 = lerp(armThickness * 0.85, armThickness * 0.4, b / bays);
+        const h1 = lerp(armThickness * 0.85, armThickness * 0.4, (b + 1) / bays);
+        ctx.moveTo(x0, -h0);
+        ctx.lineTo(x1, h1);
+        ctx.moveTo(x0, h0);
+        ctx.lineTo(x1, -h1);
+      }
+      ctx.stroke();
+
+      // Black & Yellow Hazard-Striped Cushioned Hydraulic Catch Rail
+      const railStartX = Math.max(2 * s, (-TOWER_RIGHT_X - specs.catchHalfWidth) * s);
+      const railEndX = Math.min(armLen - 1.2 * s, (-TOWER_RIGHT_X + specs.catchHalfWidth) * s);
+      if (railEndX > railStartX) {
+        const railH = Math.max(2.4, 1.15 * s);
+        const railY = layer === 'back' ? -armThickness * 0.72 : -armThickness * 0.65;
+
+        ctx.fillStyle = arms.caught ? '#34d399' : (layer === 'back' ? '#d97706' : '#f59e0b');
+        ctx.fillRect(railStartX, railY, railEndX - railStartX, railH);
+
+        if (layer === 'front') {
+          ctx.fillStyle = '#0f172a';
+          const stripeCount = 8;
+          const stepW = (railEndX - railStartX) / stripeCount;
+          for (let st = 0; st < stripeCount; st += 2) {
+            ctx.fillRect(railStartX + st * stepW, railY, stepW * 0.48, railH);
+          }
+
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillRect(railStartX, railY - 0.35 * s, railEndX - railStartX, Math.max(1, 0.35 * s));
+        }
+      }
+
+      // Tip Guidance LED Beacon
+      if (layer === 'front') {
+        const tipLedCol = arms.caught ? '#34d399' : (arms.beaconActive ? '#38bdf8' : '#f59e0b');
+        ctx.fillStyle = tipLedCol;
+        ctx.shadowColor = tipLedCol;
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(armLen - 0.6 * s, 0, Math.max(2, 0.65 * s), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Hydraulic Push-Arm Piston under Front Chopstick
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = Math.max(1.8, 0.75 * s);
+        ctx.beginPath();
+        ctx.moveTo(-1.5 * s, 4.5 * s);
+        ctx.lineTo(armLen * 0.32, armThickness * 0.55);
+        ctx.stroke();
+
+        // Catch impact flash when clamping!
+        if (arms.sparkFlash > 0.05) {
+          const pinRelX = (arms.catchPinX - TOWER_RIGHT_X) * s;
+          ctx.globalCompositeOperation = 'lighter';
+          const fl = ctx.createRadialGradient(pinRelX, 0, 1, pinRelX, 0, 10 * s);
+          fl.addColorStop(0, `rgba(255, 250, 210, ${arms.sparkFlash})`);
+          fl.addColorStop(0.5, `rgba(52, 211, 153, ${arms.sparkFlash * 0.65})`);
+          fl.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = fl;
+          ctx.beginPath();
+          ctx.arc(pinRelX, 0, 10 * s, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalCompositeOperation = 'source-over';
+        }
+      }
+
+      ctx.strokeStyle = layer === 'back' ? 'rgba(15, 23, 42, 0.85)' : 'rgba(226, 232, 240, 0.5)';
+      ctx.lineWidth = Math.max(1, 0.22 * s);
+      ctx.beginPath();
+      ctx.moveTo(0, -armThickness * 0.95);
+      ctx.lineTo(armLen, -armThickness * 0.42);
+      ctx.lineTo(armLen, armThickness * 0.48);
+      ctx.lineTo(0, armThickness * 1.05);
+      ctx.closePath();
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function drawRaptorPlumeAndGlow() {
+      if (ship.throttleActual <= 0.01 || ship.fuel <= 0 || ship.activeEngines === 0) return;
+
+      const comOff = getComOffset();
+      const s = cam.scale;
+      const thr = ship.throttleActual;
+      const nEng = ship.activeEngines;
+      const rocketScr = worldToScreen(ship.x, ship.y);
+
+      ctx.save();
+      ctx.translate(rocketScr.x, rocketScr.y);
+      ctx.rotate(ship.angle);
+      ctx.globalCompositeOperation = 'lighter';
+
+      const offsets = nEng === 1 ? [0] : nEng === 2 ? [-1.55, 1.55] : [-1.95, 0, 1.95];
+      const baseLocalY = NOZZLE_LOCAL_Y - comOff;
+      const nozzleWorld = localToWorld(0, baseLocalY);
+      const uprightDot = Math.cos(ship.angle + ship.gimbalAngle);
+
+      let maxPlumeM = (22 + thr * 45) * (0.85 + nEng * 0.14);
+      if (uprightDot > 0.2 && nozzleWorld.y > 0) {
+        maxPlumeM = Math.min(maxPlumeM, (nozzleWorld.y / uprightDot) + 2.5);
+      }
+
+      offsets.forEach((ox, idx) => {
+        ctx.save();
+        ctx.translate(ox * s, -baseLocalY * s);
+        ctx.rotate(-ship.gimbalAngle);
+
+        const jitter = 0.94 + Math.random() * 0.12;
+        const pLen = maxPlumeM * s * jitter;
+        const pWidth = (1.65 + thr * 1.5) * s * (0.95 + Math.random() * 0.1);
+
+        // 1. Methalox Blue-Violet to Bright Orange Outer Sheath
+        const outerGrad = ctx.createLinearGradient(0, 0, 0, pLen);
+        outerGrad.addColorStop(0, `rgba(145, 178, 255, ${0.76 * thr})`);
+        outerGrad.addColorStop(0.28, `rgba(130, 95, 255, ${0.50 * thr})`);
+        outerGrad.addColorStop(0.65, `rgba(255, 132, 65, ${0.36 * thr})`);
+        outerGrad.addColorStop(1, 'rgba(255, 80, 20, 0)');
+
+        ctx.fillStyle = outerGrad;
+        ctx.beginPath();
+        ctx.moveTo(-pWidth * 0.68, 0);
+        ctx.quadraticCurveTo(-pWidth * 1.4, pLen * 0.44, 0, pLen);
+        ctx.quadraticCurveTo(pWidth * 1.4, pLen * 0.44, pWidth * 0.68, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        // 2. White-Hot Core
+        const coreLen = pLen * 0.74;
+        const coreGrad = ctx.createLinearGradient(0, 0, 0, coreLen);
+        coreGrad.addColorStop(0, `rgba(255, 255, 255, ${0.98 * thr})`);
+        coreGrad.addColorStop(0.28, `rgba(185, 232, 255, ${0.88 * thr})`);
+        coreGrad.addColorStop(0.72, `rgba(120, 155, 255, ${0.38 * thr})`);
+        coreGrad.addColorStop(1, 'rgba(115, 150, 255, 0)');
+
+        ctx.fillStyle = coreGrad;
+        ctx.beginPath();
+        ctx.moveTo(-pWidth * 0.44, 0);
+        ctx.quadraticCurveTo(-pWidth * 0.68, coreLen * 0.5, 0, coreLen);
+        ctx.quadraticCurveTo(pWidth * 0.68, coreLen * 0.5, pWidth * 0.44, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        // 3. Mach Shock Diamonds
+        const diamondCount = Math.max(3, Math.min(8, Math.floor(maxPlumeM / 6.0)));
+        const spacing = (coreLen * 0.92) / diamondCount;
+        for (let d = 0; d < diamondCount; d++) {
+          const dy = spacing * (d + 0.52) + Math.sin(simTime * 58 + d + idx) * (0.28 * s);
+          if (dy > pLen * 0.9) break;
+          const fade = 1 - d / (diamondCount + 0.5);
+          const dw = pWidth * (0.46 - d * 0.032);
+          const dh = spacing * 0.48;
+
+          const dGrad = ctx.createRadialGradient(0, dy, 0.5, 0, dy, Math.max(dw, dh));
+          dGrad.addColorStop(0, `rgba(255, 255, 255, ${0.96 * fade * thr})`);
+          dGrad.addColorStop(0.45, `rgba(170, 222, 255, ${0.68 * fade * thr})`);
+          dGrad.addColorStop(1, 'rgba(130, 90, 255, 0)');
+
+          ctx.fillStyle = dGrad;
+          ctx.beginPath();
+          ctx.moveTo(0, dy - dh);
+          ctx.lineTo(dw, dy);
+          ctx.lineTo(0, dy + dh);
+          ctx.lineTo(-dw, dy);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.restore();
+      });
+
+      // 4. Flame Trench Ground Impingement Plasma Blast
+      if (ship.groundEffect > 0.10) {
+        ctx.restore();
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        const hitScr = worldToScreen(ship.x, 0);
+        const ge = ship.groundEffect;
+        const spreadW = (18 + ge * 34 * (0.6 + nEng * 0.2)) * s;
+        const spreadH = (3.0 + ge * 4.5) * s;
+
+        const impGrad = ctx.createRadialGradient(hitScr.x, hitScr.y - 1, 2, hitScr.x, hitScr.y - 1, spreadW);
+        impGrad.addColorStop(0, `rgba(255, 255, 255, ${0.92 * ge})`);
+        impGrad.addColorStop(0.24, `rgba(175, 220, 255, ${0.68 * ge})`);
+        impGrad.addColorStop(0.58, `rgba(255, 152, 65, ${0.38 * ge})`);
+        impGrad.addColorStop(1, 'rgba(255, 90, 20, 0)');
+
+        ctx.fillStyle = impGrad;
+        ctx.beginPath();
+        ctx.ellipse(hitScr.x, hitScr.y - spreadH * 0.25, spreadW, spreadH, 0, Math.PI, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    function drawStarshipModel() {
+      const comOff = getComOffset();
+      const s = cam.scale;
+      const scr = worldToScreen(ship.x, ship.y);
+      const px = (mx) => mx * s;
+      const py = (my) => -(my - comOff) * s;
+
+      ctx.save();
+      ctx.translate(scr.x, scr.y);
+      ctx.rotate(ship.angle);
+
+      const r = ROCKET_RADIUS * s;
+      const yBot = py(-23.0);
+      const yCylTop = py(10.0);
+      const yNose = py(25.0);
+
+      // NO LANDING LEGS! Only articulating aero flaps, 3 gimbaled Raptor bells, hull, and Catch Pins!
+      drawStarshipFlaps(s, comOff);
+      drawRaptorBells(s, comOff);
+
+      function defineHullPath() {
+        ctx.beginPath();
+        ctx.moveTo(-r, yBot);
+        ctx.lineTo(-r, yCylTop);
+        ctx.bezierCurveTo(-r, yCylTop - 6.4 * s, -r * 0.42, yNose + 1.1 * s, 0, yNose);
+        ctx.bezierCurveTo(r * 0.42, yNose + 1.1 * s, r, yCylTop - 6.4 * s, r, yCylTop);
+        ctx.lineTo(r, yBot);
+        ctx.closePath();
+      }
+
+      // Brushed 304L Stainless Steel Specular Reflection
+      const sunShift = Math.sin(ship.angle - 0.5) * 0.22;
+      const isNight = env.theme === 'night' || env.theme === 'nightstorm';
+      const steelGrad = ctx.createLinearGradient(-r, 0, r, 0);
+      steelGrad.addColorStop(0, isNight ? '#263040' : '#4a5565');
+      steelGrad.addColorStop(Math.max(0.08, 0.22 + sunShift), isNight ? '#b5c5d8' : '#e8eef5');
+      steelGrad.addColorStop(Math.max(0.20, 0.36 + sunShift), isNight ? '#dbe7f5' : '#ffffff');
+      steelGrad.addColorStop(0.55, isNight ? '#64748b' : '#9aa6b5');
+      steelGrad.addColorStop(0.82, isNight ? '#334155' : '#5a6676');
+      steelGrad.addColorStop(1, '#1e2530');
+
+      defineHullPath();
+      ctx.fillStyle = steelGrad;
+      ctx.fill();
+
+      ctx.save();
+      defineHullPath();
+      ctx.clip();
+
+      // Horizontal Stainless Steel Weld Rings
+      for (let m = -23.0; m < 23; m += 2.2) {
+        const ry0 = py(m + 2.2);
+        const ry1 = py(m);
+        const ringTone = ((Math.abs(Math.round(m * 10)) % 3) - 1) * 0.045;
+        if (ringTone !== 0) {
+          ctx.fillStyle = ringTone > 0 ? `rgba(255,255,255,${ringTone})` : `rgba(15,23,42,${-ringTone})`;
+          ctx.fillRect(-r, ry0, r * 2, ry1 - ry0);
+        }
+        ctx.strokeStyle = 'rgba(30, 41, 59, 0.34)';
+        ctx.lineWidth = Math.max(0.6, 0.14 * s);
+        ctx.beginPath();
+        ctx.moveTo(-r, ry1);
+        ctx.quadraticCurveTo(0, ry1 + 0.45 * s, r, ry1);
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+        ctx.beginPath();
+        ctx.moveTo(-r, ry1 - 0.18 * s);
+        ctx.quadraticCurveTo(0, ry1 + 0.28 * s, r, ry1 - 0.18 * s);
+        ctx.stroke();
+      }
+
+      // Vertical Cable Raceway Pipe
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(px(-1.75), py(11.5), px(0.58), py(-22.8) - py(11.5));
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.fillRect(px(-1.75), py(11.5), px(0.18), py(-22.8) - py(11.5));
+
+      // STARSHIP Stencil
+      if (s > 2.6) {
+        ctx.fillStyle = 'rgba(20, 28, 40, 0.55)';
+        ctx.fillRect(px(-3.6), py(4.5), px(2.8), px(0.32));
+        ctx.save();
+        ctx.translate(px(-2.7), py(-2.0));
+        ctx.rotate(-Math.PI / 2);
+        ctx.font = `700 ${Math.max(5, 1.35 * s)}px "JetBrains Mono", monospace`;
+        ctx.fillStyle = 'rgba(22, 30, 44, 0.62)';
+        ctx.textAlign = 'center';
+        ctx.fillText('STARSHIP', 0, 0);
+        ctx.restore();
+      }
+
+      // Black Hexagonal TPS Heatshield Tiles on Belly Side (+X)
+      const tileEdgeX = px(0.45);
+      const tpsGrad = ctx.createLinearGradient(tileEdgeX, 0, r, 0);
+      tpsGrad.addColorStop(0, '#1e242d');
+      tpsGrad.addColorStop(0.45, '#12161d');
+      tpsGrad.addColorStop(1, '#080b10');
+      ctx.fillStyle = tpsGrad;
+      ctx.fillRect(tileEdgeX, yNose - 2, r - tileEdgeX + 2, yBot - yNose + 4);
+
+      if (s > 2.3) {
+        const hexH = 1.15 * s;
+        const hexW = 1.05 * s;
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.22)';
+        ctx.lineWidth = Math.max(0.5, 0.09 * s);
+        let row = 0;
+        for (let ty = yNose + hexH; ty < yBot; ty += hexH * 0.78) {
+          const offset = (row % 2) * (hexW * 0.5);
+          for (let tx = tileEdgeX + offset; tx < r + hexW; tx += hexW) {
+            ctx.beginPath();
+            ctx.moveTo(tx, ty - hexH * 0.45);
+            ctx.lineTo(tx + hexW * 0.48, ty - hexH * 0.2);
+            ctx.lineTo(tx + hexW * 0.48, ty + hexH * 0.2);
+            ctx.lineTo(tx, ty + hexH * 0.45);
+            ctx.lineTo(tx - hexW * 0.48, ty + hexH * 0.2);
+            ctx.lineTo(tx - hexW * 0.48, ty - hexH * 0.2);
+            ctx.closePath();
+            ctx.stroke();
+          }
+          row++;
+        }
+      }
+
+      // Ceramic Trim Seam
+      ctx.strokeStyle = 'rgba(203, 213, 225, 0.48)';
+      ctx.lineWidth = Math.max(0.8, 0.16 * s);
+      ctx.beginPath();
+      ctx.moveTo(tileEdgeX, yNose);
+      ctx.lineTo(tileEdgeX, yBot);
+      ctx.stroke();
+
+      // Reinforced Structural Load-Bearing Band around Catch Pin Zone
+      const pinBandY = py(CATCH_PIN_LOCAL_Y);
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.34)';
+      ctx.fillRect(-r, pinBandY - 0.9 * s, r * 2, 1.8 * s);
+
+      // Reentry / High-Speed Belly Flop Orange-Red Glow on TPS Tiles
+      if (ship.aoaHeat > 0.04) {
+        const heatGrad = ctx.createLinearGradient(r - 3.0 * s, 0, r, 0);
+        heatGrad.addColorStop(0, 'rgba(255, 80, 15, 0)');
+        heatGrad.addColorStop(0.6, `rgba(255, 105, 25, ${0.58 * ship.aoaHeat})`);
+        heatGrad.addColorStop(1, `rgba(255, 228, 150, ${0.95 * ship.aoaHeat})`);
+        ctx.fillStyle = heatGrad;
+        ctx.fillRect(r - 3.0 * s, yNose, 3.2 * s, yBot - yNose);
+      }
+
+      // Raptor Plume Orange-Blue Bounce Light Reflecting on Stainless Hull
+      if (ship.throttleActual > 0.02 && ship.fuel > 0 && ship.activeEngines > 0) {
+        const glowStrength = Math.min(1, ship.throttleActual * (0.48 + ship.groundEffect * 0.55) * (0.55 + ship.activeEngines * 0.16));
+        const hullGlow = ctx.createLinearGradient(0, yBot, 0, yBot - 28 * s);
+        hullGlow.addColorStop(0, `rgba(255, 195, 130, ${0.65 * glowStrength})`);
+        hullGlow.addColorStop(0.25, `rgba(155, 212, 255, ${0.55 * glowStrength})`);
+        hullGlow.addColorStop(0.65, `rgba(255, 145, 70, ${0.22 * (0.3 + ship.groundEffect)})`);
+        hullGlow.addColorStop(1, 'rgba(100, 150, 255, 0)');
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.fillStyle = hullGlow;
+        ctx.fillRect(-r, yBot - 28 * s, r * 2, 28 * s);
+        ctx.globalCompositeOperation = 'source-over';
+      }
+
+      ctx.restore(); // End hull clip
+
+      // Hull Rim Highlight
+      defineHullPath();
+      ctx.strokeStyle = 'rgba(226, 232, 240, 0.36)';
+      ctx.lineWidth = Math.max(0.8, 0.15 * s);
+      ctx.stroke();
+
+      // === PROMINENT METALLIC CATCH PINS / LOAD POINTS (หมุดรับน้ำหนักใต้ครีบหน้า) ===
+      drawCatchPins(s, comOff);
+
+      // Nose RCS Cold-Gas Thruster Vents
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(px(-2.2), py(20.5), Math.max(1.2, 0.35 * s), 0, Math.PI * 2);
+      ctx.arc(px(2.2), py(20.5), Math.max(1.2, 0.35 * s), 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawCatchPins(s, comOff) {
+      const py = (my) => -(my - comOff) * s;
+      const pinY = py(CATCH_PIN_LOCAL_Y);
+      const r = ROCKET_RADIUS * s;
+
+      // Side-protruding reinforced stainless-steel Catch Pins on both flanks right below forward flaps!
+      [-1, 1].forEach((side) => {
+        const lugGrad = ctx.createLinearGradient(side * r, pinY - 1.2 * s, side * (r + 2.0 * s), pinY + 1.2 * s);
+        lugGrad.addColorStop(0, '#94a3b8');
+        lugGrad.addColorStop(0.4, '#ffffff');
+        lugGrad.addColorStop(1, '#334155');
+        ctx.fillStyle = lugGrad;
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = Math.max(0.8, 0.18 * s);
+
+        ctx.beginPath();
+        ctx.moveTo(side * (r - 0.35 * s), pinY - 1.25 * s);
+        ctx.lineTo(side * (r + 1.95 * s), pinY - 0.68 * s);
+        ctx.lineTo(side * (r + 1.95 * s), pinY + 0.68 * s);
+        ctx.lineTo(side * (r - 0.35 * s), pinY + 1.25 * s);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      });
+
+      // Foreground Heavy Titanium Catch Pin Hub (engages front Chopstick cushion rail)
+      ctx.fillStyle = '#e2e8f0';
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = Math.max(0.8, 0.18 * s);
+      ctx.beginPath();
+      ctx.roundRect(-1.55 * s, pinY - 1.0 * s, 3.1 * s, 2.0 * s, 0.45 * s);
+      ctx.fill();
+      ctx.stroke();
+
+      // Subtle glowing beacon on Catch Pin so player clearly sees exact alignment point
+      const pinPos = getCatchPinWorld();
+      const nearArms = Math.abs(pinPos.y - arms.carriageY) < 95 && Math.abs(pinPos.x) < 28;
+      if (nearArms || arms.caught) {
+        ctx.fillStyle = arms.caught ? '#34d399' : '#fbbf24';
+        ctx.shadowColor = arms.caught ? '#34d399' : '#fbbf24';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(0, pinY, Math.max(1.8, 0.58 * s), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    function drawStarshipFlaps(s, comOff) {
+      const py = (my) => -(my - comOff) * s;
+
+      // Forward Flap (cleanly positioned ABOVE Catch Pins at y = +12.6m)
+      const fwdSpan = (2.2 + ship.flapFwd * 4.5) * s;
+      const fwdTopY = py(21.4);
+      const fwdBotY = py(14.2);
+      const fwdBaseX = -ROCKET_RADIUS * s * 0.72;
+
+      const fGrad = ctx.createLinearGradient(fwdBaseX - fwdSpan, fwdTopY, fwdBaseX, fwdBotY);
+      fGrad.addColorStop(0, '#1e293b');
+      fGrad.addColorStop(0.28, '#94a3b8');
+      fGrad.addColorStop(0.7, '#cbd5e1');
+      fGrad.addColorStop(1, '#475569');
+      ctx.fillStyle = fGrad;
+      ctx.beginPath();
+      ctx.moveTo(fwdBaseX, fwdTopY);
+      ctx.lineTo(fwdBaseX - fwdSpan * 0.78, fwdTopY + 2.8 * s);
+      ctx.lineTo(fwdBaseX - fwdSpan, fwdBotY - 0.4 * s);
+      ctx.lineTo(fwdBaseX, fwdBotY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(15, 23, 42, 0.75)';
+      ctx.lineWidth = Math.max(0.8, 0.16 * s);
+      ctx.stroke();
+
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(fwdBaseX - 0.55 * s, fwdTopY + 0.8 * s, 1.1 * s, (fwdBotY - fwdTopY) - 1.6 * s);
+
+      // Aft Flap
+      const aftSpan = (3.0 + ship.flapAft * 5.9) * s;
+      const aftTopY = py(-8.2);
+      const aftBotY = py(-22.8);
+      const aftBaseX = -ROCKET_RADIUS * s * 0.92;
+
+      const aGrad = ctx.createLinearGradient(aftBaseX - aftSpan, aftTopY, aftBaseX, aftBotY);
+      aGrad.addColorStop(0, '#0f172a');
+      aGrad.addColorStop(0.22, '#64748b');
+      aGrad.addColorStop(0.62, '#dbe4ee');
+      aGrad.addColorStop(1, '#475569');
+      ctx.fillStyle = aGrad;
+      ctx.beginPath();
+      ctx.moveTo(aftBaseX, aftTopY);
+      ctx.lineTo(aftBaseX - aftSpan * 0.72, aftTopY + 4.2 * s);
+      ctx.lineTo(aftBaseX - aftSpan, aftBotY - 0.4 * s);
+      ctx.lineTo(aftBaseX, aftBotY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(15, 23, 42, 0.8)';
+      ctx.stroke();
+
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(aftBaseX - 0.65 * s, aftTopY + 1.0 * s, 1.3 * s, (aftBotY - aftTopY) - 2.0 * s);
+
+      // Windward Flap Edge Silhouette
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.moveTo(ROCKET_RADIUS * s * 0.95, aftTopY + 2 * s);
+      ctx.lineTo(ROCKET_RADIUS * s + (0.6 + ship.flapAft * 1.4) * s, aftTopY + 5 * s);
+      ctx.lineTo(ROCKET_RADIUS * s + (0.8 + ship.flapAft * 1.6) * s, aftBotY - 0.8 * s);
+      ctx.lineTo(ROCKET_RADIUS * s * 0.95, aftBotY);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawRaptorBells(s, comOff) {
+      const py = (my) => -(my - comOff) * s;
+      const mountY = py(-22.8);
+
+      ctx.fillStyle = '#090d14';
+      ctx.fillRect(-ROCKET_RADIUS * s * 0.88, mountY - 0.5 * s, ROCKET_RADIUS * s * 1.76, 1.4 * s);
+
+      const bellXs = [-1.95, 0, 1.95];
+      const litIndices = ship.activeEngines === 1 ? [1] : ship.activeEngines === 2 ? [0, 2] : [0, 1, 2];
+
+      bellXs.forEach((bx, idx) => {
+        const isLit = ship.throttleActual > 0.02 && ship.fuel > 0 && litIndices.includes(idx);
+
+        ctx.save();
+        ctx.translate(bx * s, mountY);
+        ctx.rotate(-ship.gimbalAngle);
+
+        const topW = 0.72 * s;
+        const botW = 1.28 * s;
+        const bellH = 3.0 * s;
+
+        const bGrad = ctx.createLinearGradient(-botW, 0, botW, 0);
+        bGrad.addColorStop(0, isLit ? '#451a1a' : '#1e242c');
+        bGrad.addColorStop(0.35, isLit ? '#b4746a' : '#8a96a6');
+        bGrad.addColorStop(0.65, isLit ? '#7c3a2d' : '#475569');
+        bGrad.addColorStop(1, '#11161d');
+
+        ctx.fillStyle = bGrad;
+        ctx.beginPath();
+        ctx.moveTo(-topW, 0);
+        ctx.quadraticCurveTo(-botW * 0.9, bellH * 0.5, -botW, bellH);
+        ctx.lineTo(botW, bellH);
+        ctx.quadraticCurveTo(botW * 0.9, bellH * 0.5, topW, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(203, 213, 225, 0.35)';
+        ctx.lineWidth = Math.max(0.6, 0.14 * s);
+        ctx.beginPath();
+        ctx.moveTo(-botW * 0.78, bellH * 0.45);
+        ctx.lineTo(botW * 0.78, bellH * 0.45);
+        ctx.moveTo(-botW * 0.92, bellH * 0.78);
+        ctx.lineTo(botW * 0.92, bellH * 0.78);
+        ctx.stroke();
+
+        if (isLit) {
+          ctx.fillStyle = `rgba(255, 110, 50, ${0.42 * ship.throttleActual})`;
+          ctx.beginPath();
+          ctx.ellipse(0, bellH * 0.85, botW * 0.9, 0.45 * s, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = `rgba(210, 240, 255, ${0.65 + ship.throttleActual * 0.35})`;
+          ctx.beginPath();
+          ctx.ellipse(0, bellH, botW * 0.85, 0.30 * s, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      });
+    }
+
+    function drawAeroAirflowEffects() {
+      if (arms.caught) return;
+      const vRelX = ship.vx - env.windX;
+      const vRelY = ship.vy;
+      const spd = Math.hypot(vRelX, vRelY);
+      if (spd < 22) return;
+
+      const intensity = Math.min(1, (spd - 22) / 38);
+      const comOff = getComOffset();
+      const s = cam.scale;
+      const vDirX = -vRelX / spd;
+      const vDirY = -vRelY / spd;
+
+      ctx.save();
+      ctx.lineWidth = Math.max(1, 0.24 * s);
+      ctx.lineCap = 'round';
+      const isHot = ship.aoaHeat > 0.22;
+      ctx.strokeStyle = isHot
+        ? `rgba(255, 165, 80, ${0.44 * intensity})`
+        : `rgba(224, 242, 254, ${0.28 * intensity})`;
+
+      [
+        { lx: 3.5, ly: 22 - comOff },
+        { lx: 4.5, ly: -22 - comOff },
+        { lx: -6.5, ly: 16 - comOff },
+        { lx: -7.5, ly: -17 - comOff }
+      ].forEach((a, idx) => {
+        const wp = localToWorld(a.lx, a.ly);
+        const phase = (simTime * 16 + idx * 1.7) % 1;
+        const startX = wp.x + vDirX * phase * 12;
+        const startY = wp.y + vDirY * phase * 12;
+        const len = 10 + intensity * 18;
+        const p0 = worldToScreen(startX, startY);
+        const p1 = worldToScreen(startX + vDirX * len, startY + vDirY * len);
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y);
+        ctx.lineTo(p1.x, p1.y);
+        ctx.stroke();
+      });
+      ctx.restore();
+    }
+
+    function drawParticlesLayer(layer) {
+      ctx.save();
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const isFront = p.type === 'fire' || p.type === 'spark' || p.type === 'rcs';
+        if ((layer === 'front') !== isFront) continue;
+
+        const t = p.life / p.maxLife;
+        const alpha = p.alpha * (1 - t);
+        if (alpha <= 0.01) continue;
+
+        const scr = worldToScreen(p.x, p.y);
+        const rad = Math.max(1, p.r * cam.scale * 0.55);
+
+        if (p.type === 'fire') {
+          ctx.globalCompositeOperation = 'lighter';
+          const g = ctx.createRadialGradient(scr.x, scr.y, 0.5, scr.x, scr.y, rad);
+          g.addColorStop(0, `rgba(255, 250, 220, ${alpha})`);
+          g.addColorStop(0.45, `rgba(${p.color}, ${alpha * 0.85})`);
+          g.addColorStop(1, 'rgba(255, 60, 10, 0)');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(scr.x, scr.y, rad, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalCompositeOperation = 'source-over';
+        } else if (p.type === 'spark') {
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.strokeStyle = `rgba(${p.color}, ${alpha})`;
+          ctx.lineWidth = Math.max(1.2, rad * 0.9);
+          ctx.beginPath();
+          ctx.moveTo(scr.x, scr.y);
+          ctx.lineTo(scr.x - p.vx * cam.scale * 0.035, scr.y + p.vy * cam.scale * 0.035);
+          ctx.stroke();
+          ctx.globalCompositeOperation = 'source-over';
+        } else {
+          const g = ctx.createRadialGradient(scr.x, scr.y, rad * 0.1, scr.x, scr.y, rad);
+          g.addColorStop(0, `rgba(${p.color}, ${alpha})`);
+          g.addColorStop(1, `rgba(${p.color}, 0)`);
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(scr.x, scr.y, rad, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+    }
+
+    function drawDebris() {
+      ctx.save();
+      for (let i = 0; i < debris.length; i++) {
+        const d = debris[i];
+        const scr = worldToScreen(d.x, d.y);
+        const s = cam.scale;
+        ctx.save();
+        ctx.translate(scr.x, scr.y);
+        ctx.rotate(d.angle);
+        if (d.kind === 'nose') {
+          ctx.fillStyle = '#cbd5e1';
+          ctx.beginPath();
+          ctx.moveTo(0, -d.h * 0.5 * s);
+          ctx.lineTo(d.w * 0.5 * s, d.h * 0.5 * s);
+          ctx.lineTo(-d.w * 0.5 * s, d.h * 0.5 * s);
+          ctx.closePath();
+          ctx.fill();
+        } else if (d.kind === 'tile') {
+          ctx.fillStyle = '#111827';
+          ctx.fillRect(-d.w * 0.5 * s, -d.h * 0.5 * s, d.w * s, d.h * s);
+        } else {
+          ctx.fillStyle = d.kind === 'flap' ? '#64748b' : '#cbd5e1';
+          ctx.fillRect(-d.w * 0.5 * s, -d.h * 0.5 * s, d.w * s, d.h * s);
+        }
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+
+    function drawShockwaves() {
+      if (shockwaves.length === 0) return;
+      ctx.save();
+      for (let i = 0; i < shockwaves.length; i++) {
+        const sw = shockwaves[i];
+        const prog = sw.life / sw.maxLife;
+        const scr = worldToScreen(sw.x, sw.y);
+        ctx.strokeStyle = `rgba(255, 245, 220, ${(1 - prog) * 0.85})`;
+        ctx.lineWidth = Math.max(1.5, (1 - prog) * 9);
+        ctx.beginPath();
+        ctx.arc(scr.x, scr.y, sw.r * cam.scale, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawStormRain() {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(186, 215, 245, 0.28)';
+      ctx.lineWidth = 1.2;
+      const windTilt = env.windX * 1.4;
+      for (let i = 0; i < raindrops.length; i++) {
+        const rd = raindrops[i];
+        const rx = ((rd.x * viewW + simTime * windTilt * 32) % viewW + viewW) % viewW;
+        const ry = ((rd.y * viewH + simTime * 680 * rd.spd) % viewH + viewH) % viewH;
+        ctx.beginPath();
+        ctx.moveTo(rx, ry);
+        ctx.lineTo(rx + windTilt * 0.85, ry + rd.len);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    /* =========================================================================
+       11. HUD, ALIGNMENT BAR, HANGAR & MISSIONS UI SYNC
+       ========================================================================= */
+    const elAlt = document.getElementById('hudAlt');
+    const elVy = document.getElementById('hudVy');
+    const elVyWrap = document.getElementById('hudVyWrap');
+    const elVx = document.getElementById('hudVx');
+    const elTowerX = document.getElementById('hudTowerX');
+    const elTowerXWrap = document.getElementById('hudTowerXWrap');
+    const elPitch = document.getElementById('hudPitch');
+    const elPitchWrap = document.getElementById('hudPitchWrap');
+    const elThrPct = document.getElementById('hudThrPct');
+    const elBarThrTarget = document.getElementById('barThrTarget');
+    const elBarThrActual = document.getElementById('barThrActual');
+    const elTwr = document.getElementById('hudTwr');
+    const elModeLabel = document.getElementById('hudModeLabel');
+    const elFuelPct = document.getElementById('hudFuelPct');
+    const elBarCh4 = document.getElementById('barCh4');
+    const elBarLox = document.getElementById('barLox');
+    const elWind = document.getElementById('hudWind');
+    const elPhaseText = document.getElementById('phaseText');
+    const elPhaseDot = document.getElementById('phaseDot');
+    const elWarnPill = document.getElementById('warningPill');
+    const elTowerPointer = document.getElementById('towerPointer');
+    const elTowerArrow = document.getElementById('towerArrow');
+    const elTowerDistText = document.getElementById('towerDistText');
+
+    const elAlignStatus = document.getElementById('alignStatusText');
+    const elAlignHeight = document.getElementById('alignHeightText');
+    const elAlignSafeZone = document.getElementById('alignSafeZone');
+    const elAlignShipMarker = document.getElementById('alignShipMarker');
+    const elAlignArmReady = document.getElementById('alignArmReady');
+    const elAlignCatchCond = document.getElementById('alignCatchCond');
+
+    const rapDots = [document.getElementById('rap0'), document.getElementById('rap1'), document.getElementById('rap2')];
+
+    const ctrlLeftBtn = document.getElementById('ctrlLeft');
+    const ctrlRightBtn = document.getElementById('ctrlRight');
+    const ctrlCutBtn = document.getElementById('ctrlCut');
+    const ctrlFireBtn = document.getElementById('ctrlFire');
+    const ctrlAutoBtn = document.getElementById('ctrlAutoLand');
+
+    function updateHUD() {
+      const specs = getShipSpecs();
+      const pinPos = getCatchPinWorld();
+      const armY = arms.carriageY + arms.dipY;
+      const altAboveArms = pinPos.y - armY;
+
+      elAlt.textContent = Math.max(0, Math.round(pinPos.y)).toLocaleString();
+      elVy.textContent = ship.vy.toFixed(1);
+      elVx.textContent = ship.vx.toFixed(1);
+
+      const signX = pinPos.x >= 0 ? '+' : '';
+      elTowerX.textContent = `${signX}${pinPos.x.toFixed(1)}`;
+      const inZone = Math.abs(pinPos.x) <= specs.catchHalfWidth;
+      elTowerXWrap.className = inZone
+        ? 'mono text-xs sm:text-sm font-bold text-emerald-400'
+        : pinPos.x < -11
+          ? 'mono text-xs sm:text-sm font-bold text-red-400'
+          : 'mono text-xs sm:text-sm font-bold text-sky-300';
+
+      if (altAboveArms < 130 && ship.vy < -18) {
+        elVyWrap.className = 'mono text-xs sm:text-sm font-bold text-red-400';
+      } else if (altAboveArms < 60 && ship.vy < -specs.maxSafeVy) {
+        elVyWrap.className = 'mono text-xs sm:text-sm font-bold text-amber-300';
+      } else if (altAboveArms < 60 && Math.abs(ship.vy) <= specs.maxSafeVy) {
+        elVyWrap.className = 'mono text-xs sm:text-sm font-bold text-emerald-400';
+      } else {
+        elVyWrap.className = 'mono text-xs sm:text-sm font-bold text-sky-300';
+      }
+
+      const pitchDeg = normalizeAngle(ship.angle) * 180 / Math.PI;
+      elPitch.textContent = Math.round(pitchDeg);
+      elPitchWrap.className = Math.abs(pitchDeg) <= specs.maxSafeTiltDeg * 0.65
+        ? 'mono text-xs sm:text-sm font-bold text-emerald-300'
+        : Math.abs(pitchDeg) > 45
+          ? 'mono text-xs sm:text-sm font-bold text-amber-300'
+          : 'mono text-xs sm:text-sm font-bold text-sky-300';
+
+      elThrPct.textContent = Math.round(ship.throttleActual * 100) + '%';
+      elBarThrTarget.style.width = (ship.throttleTarget * 100) + '%';
+      elBarThrActual.style.width = (ship.throttleActual * 100) + '%';
+
+      const curMass = ship.dryMass + ship.fuel;
+      const curThrust = (ship.throttleActual > 0.01 && ship.fuel > 0)
+        ? ship.activeEngines * specs.raptorThrust * (0.12 + ship.throttleActual * 0.88)
+        : 0;
+      elTwr.textContent = (curThrust / (curMass * G)).toFixed(1);
+      elModeLabel.textContent = autoLand.enabled ? 'AUTO-AI' : 'MANUAL';
+      elModeLabel.className = autoLand.enabled ? 'mono text-emerald-300 font-bold' : 'mono text-sky-300';
+
+      const litIndices = ship.activeEngines === 1 ? [0] : ship.activeEngines === 2 ? [1, 2] : [0, 1, 2];
+      rapDots.forEach((dot, idx) => {
+        const armed = litIndices.includes(idx);
+        const lit = armed && ship.throttleActual > 0.02 && ship.fuel > 0;
+        dot.className = 'raptor-dot w-3.5 h-3.5 rounded-full border-2 absolute ' +
+          (idx === 0 ? 'top-0 left-1/2 -translate-x-1/2 ' : idx === 1 ? 'bottom-0.5 left-0.5 ' : 'bottom-0.5 right-0.5 ') +
+          (lit ? 'raptor-lit' : armed ? 'raptor-armed' : 'raptor-off');
+      });
+
+      const fuelFrac = ship.maxFuel > 0 ? ship.fuel / ship.maxFuel : 0;
+      const fuelPct = Math.round(fuelFrac * 100);
+      elFuelPct.textContent = fuelPct + '%';
+      elFuelPct.className = fuelPct <= 15 ? 'mono font-bold text-red-400' : 'mono font-bold text-white';
+      elBarCh4.style.width = (fuelFrac * 100) + '%';
+      elBarLox.style.width = (Math.max(0, fuelFrac * 100 - (fuelFrac > 0 ? 1.5 : 0))) + '%';
+
+      const wDir = env.windX >= 0.2 ? '→' : env.windX <= -0.2 ? '←' : '•';
+      elWind.textContent = `${Math.abs(env.windX).toFixed(1)} ${wDir}`;
+
+      // Mechazilla Catch Zone Alignment Bar (Maps x in [-35m .. +65m] -> 0%..100%)
+      const mapXToPct = (wx) => Math.max(2, Math.min(98, ((wx + 35) / 100) * 100));
+      const safeLeftPct = mapXToPct(-specs.catchHalfWidth);
+      const safeRightPct = mapXToPct(specs.catchHalfWidth);
+      elAlignSafeZone.style.left = `${safeLeftPct}%`;
+      elAlignSafeZone.style.width = `${safeRightPct - safeLeftPct}%`;
+      elAlignShipMarker.style.left = `${mapXToPct(pinPos.x)}%`;
+
+      elAlignCatchCond.textContent = `เกณฑ์คีบ: V-SPD ≤ ${specs.maxSafeVy.toFixed(1)} | TILT ≤ ${specs.maxSafeTiltDeg.toFixed(0)}°`;
+
+      if (arms.caught) {
+        elAlignStatus.textContent = '🦾 LOCKED IN CHOPSTICKS!';
+        elAlignStatus.className = 'mono font-bold text-emerald-300';
+        elAlignArmReady.textContent = '🦾 แขนคีบ: ล็อกจรวดแล้ว (CLAMPED)';
+        elAlignArmReady.className = 'text-emerald-300 font-semibold';
+        elAlignShipMarker.className = 'absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-emerald-300 border-2 border-white shadow-[0_0_12px_#34d399]';
+      } else if (inZone) {
+        elAlignStatus.textContent = `✓ ในโซนรับคีบ (${signX}${pinPos.x.toFixed(1)} ม.)`;
+        elAlignStatus.className = 'mono font-bold text-emerald-300';
+        elAlignArmReady.textContent = arms.beaconActive ? '🦾 แขนคีบ: เปิดเลเซอร์นำทางพร้อมรับ!' : '🦾 แขนคีบ: กางรอรับ (OPEN)';
+        elAlignArmReady.className = 'text-emerald-300';
+        elAlignShipMarker.className = 'absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-emerald-300 border-2 border-white shadow-[0_0_10px_#34d399]';
+      } else if (pinPos.x < -11.5) {
+        elAlignStatus.textContent = `⚠️ ใกล้โครงหอคอย (${pinPos.x.toFixed(1)} ม.)`;
+        elAlignStatus.className = 'mono font-bold text-red-400';
+        elAlignArmReady.textContent = '⚠️ ระวังชนหอคอย Mechazilla!';
+        elAlignArmReady.className = 'text-red-400 font-semibold';
+        elAlignShipMarker.className = 'absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-red-400 border-2 border-white shadow-[0_0_10px_#f87171]';
+      } else {
+        elAlignStatus.textContent = `TOWER X: ${signX}${pinPos.x.toFixed(1)} ม.`;
+        elAlignStatus.className = 'mono font-bold text-sky-300';
+        elAlignArmReady.textContent = arms.beaconActive ? '🦾 แขนคีบ: เปิดไฟนำทางรอรับ (READY)' : '🦾 แขนคีบ: กางรอรับ (OPEN)';
+        elAlignArmReady.className = 'text-slate-300';
